@@ -1,0 +1,40 @@
+{
+  "name": "arrows-playground",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "src/index.tsx",
+  "dependencies": {
+    "@state-designer/react": "1.2.26",
+    "@types/lodash": "4.14.161",
+    "framer-motion": "2.7.7",
+    "html-to-image": "0.1.1",
+    "lodash": "4.17.20",
+    "perfect-arrows": "0.3.3",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "react-scripts": "3.4.3",
+    "react-use-gesture": "7.0.16",
+    "use-resize-observer": "6.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.19",
+    "@types/react-dom": "^16.9.5",
+    "typescript": "4.0.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "prettier": {
+    "semi": false
+  }
+}
