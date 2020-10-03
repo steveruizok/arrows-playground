@@ -422,7 +422,7 @@ const state = createState({
 					onEnter: "updateOrigin",
 					on: {
 						CANCELLED: { to: "notSelecting" },
-						RAISED_POINTER: {
+						STOPPED_CLICKING_CANVAS: {
 							do: "clearSelection",
 							to: "notSelecting",
 						},
@@ -898,7 +898,7 @@ const state = createState({
 				points: getArrow(a, b),
 			})
 
-			data.selection = [id]
+			data.selection = [to]
 			data.arrow.to = undefined
 			data.arrow.from = undefined
 		},

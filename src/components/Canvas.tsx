@@ -41,7 +41,7 @@ export default function ({ width = 5000, height = 5000 }: Props) {
 				width={width}
 				height={height}
 				fill="rgba(230, 230, 234, 1.000)"
-				onPointerUp={() => state.send("CLICKED_CANVAS")}
+				onPointerUp={() => state.send("STOPPED_CLICKING_CANVAS")}
 				onPointerDown={() => {
 					state.send("STARTED_CLICKING_CANVAS")
 				}}
