@@ -8,6 +8,7 @@ export default function Toolbar() {
 	const hasSelection = local.data.selection.length > 0
 	const hasSelectedBox = local.values.selectedBoxes.length > 0
 	const hasSelectedBoxes = local.values.selectedBoxes.length > 1
+	const hasManySelectedBoxes = local.values.selectedBoxes.length > 2
 
 	return (
 		<div
@@ -59,11 +60,17 @@ export default function Toolbar() {
 					<IconButton src="center-y.svg" event="ALIGNED_CENTER_Y" />
 					<IconButton src="bottom.svg" event="ALIGNED_BOTTOM" />
 					<Divider />
+					<IconButton src="stretch-x.svg" event="STRETCHED_X" />
+					<IconButton src="stretch-y.svg" event="STRETCHED_Y" />
+				</>
+			)}
+			{hasManySelectedBoxes && (
+				<>
+					<Divider />
 					<IconButton src="distribute-x.svg" event="DISTRIBUTED_X" />
 					<IconButton src="distribute-y.svg" event="DISTRIBUTED_Y" />
 				</>
 			)}
-			{hasSelectedBoxes && <div></div>}
 		</div>
 	)
 }

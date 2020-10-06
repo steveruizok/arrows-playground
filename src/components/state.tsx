@@ -314,6 +314,8 @@ const state = createState({
 		ALIGNED_CENTER_Y: ["alignSelectedBoxesCenterY", "updateArrowsToSelected"],
 		DISTRIBUTED_X: ["distributeSelectedBoxesX", "updateArrowsToSelected"],
 		DISTRIBUTED_Y: ["distributeSelectedBoxesY", "updateArrowsToSelected"],
+		STRETCHED_X: ["stretchSelectedBoxesX", "updateArrowsToSelected"],
+		STRETCHED_Y: ["stretchSelectedBoxesY", "updateArrowsToSelected"],
 	},
 	initial: "selecting",
 	states: {
@@ -1056,6 +1058,7 @@ const state = createState({
 				}
 			}
 		},
+		// Resizing
 		updateEdgeResizingBox(data) {
 			const {
 				boxes,
@@ -1337,8 +1340,8 @@ const state = createState({
 			let sum = first.width
 
 			for (let box of rest) {
-				if (box.x < min) min = box.x
-				if (box.x + box.width > max) max = box.x + box.width
+				min = Math.min(min, box.x)
+				max = Math.max(max, box.x + box.width)
 				sum += box.width
 			}
 
@@ -1359,8 +1362,8 @@ const state = createState({
 			let sum = first.height
 
 			for (let box of rest) {
-				if (box.y < min) min = box.y
-				if (box.y + box.height > max) max = box.y + box.height
+				min = Math.min(min, box.y)
+				max = Math.max(max, box.y + box.height)
 				sum += box.height
 			}
 
@@ -1369,6 +1372,36 @@ const state = createState({
 			for (let box of sortBy(selectedBoxes, "y")) {
 				box.y = t
 				t += box.height + gap
+			}
+		},
+		stretchSelectedBoxesX(data) {
+			const { boxes, selection } = data
+			const selectedBoxes = boxes.filter((box) => selection.includes(box.id))
+			const [first, ...rest] = selectedBoxes
+			let min = first.x
+			let max = first.x + first.width
+			for (let box of rest) {
+				min = Math.min(min, box.x)
+				max = Math.max(max, box.x + box.width)
+			}
+			for (let box of selectedBoxes) {
+				box.x = min
+				box.width = max - min
+			}
+		},
+		stretchSelectedBoxesY(data) {
+			const { boxes, selection } = data
+			const selectedBoxes = boxes.filter((box) => selection.includes(box.id))
+			const [first, ...rest] = selectedBoxes
+			let min = first.y
+			let max = first.y + first.height
+			for (let box of rest) {
+				min = Math.min(min, box.y)
+				max = Math.max(max, box.y + box.height)
+			}
+			for (let box of selectedBoxes) {
+				box.y = min
+				box.height = max - min
 			}
 		},
 	},
