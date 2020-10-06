@@ -39,7 +39,14 @@ export default function App() {
 					<button onClick={() => saveImage()}>Save Image</button>
 				</div>
 				<div style={{ position: "absolute", bottom: 8, left: 8 }}>
-					by <a href="https://twitter.com/steveruizok">@steveruizok</a>
+					by <a href="https://twitter.com/steveruizok">@steveruizok</a> -{" "}
+					<a href="https://github.com/steveruizok/perfect-arrows">
+						perfect-arrows
+					</a>{" "}
+					-{" "}
+					<a href="https://github.com/steveruizok/arrows-playground">
+						arrows-playground
+					</a>
 				</div>
 				<Toolbar />
 				<Guide />
