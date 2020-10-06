@@ -20,7 +20,14 @@ export interface IBox extends IFrame {
 	id: string
 	label: string
 	color: string
-	start: IFrame
+	start: IFrame & {
+		nx: number
+		ny: number
+		nmx: number
+		nmy: number
+		nw: number
+		nh: number
+	}
 }
 
 export interface IArrow {
@@ -51,6 +58,8 @@ const tempBox: IBox = {
 		y: 0,
 		width: 0,
 		height: 0,
+		nx: 0,
+		ny: 0,
 	},
 }
 
@@ -204,6 +213,12 @@ if (prevBoxes === null) {
 				y: 100,
 				width: 100,
 				height: 100,
+				nx: 0,
+				ny: 0,
+				nmx: 0,
+				nmy: 0,
+				nw: 0,
+				nh: 0,
 			},
 		},
 		{
@@ -219,6 +234,12 @@ if (prevBoxes === null) {
 				y: 300,
 				width: 100,
 				height: 100,
+				nx: 0,
+				ny: 0,
+				nmx: 0,
+				nmy: 0,
+				nw: 0,
+				nh: 0,
 			},
 		},
 	]
@@ -233,6 +254,12 @@ for (let box of initBoxes) {
 			y: box.y,
 			width: box.width,
 			height: box.height,
+			nx: 0,
+			ny: 0,
+			nmx: 0,
+			nmy: 0,
+			nw: 0,
+			nh: 0,
 		}
 	}
 }
@@ -294,6 +321,14 @@ const state = createState({
 			edge: 0,
 		},
 		currentColor: "rgba(255, 255, 255, 1)",
+		bounds: {
+			x: 0,
+			y: 0,
+			width: 0,
+			height: 0,
+			maxX: 0,
+			maxY: 0,
+		},
 	},
 	onEnter: "updateAllArrows",
 	on: {
@@ -361,11 +396,11 @@ const state = createState({
 							to: "draggingBoundingBox",
 						},
 						STARTED_RESIZING: {
-							do: ["selectBox", "updateBoxStarts", "setCorner"],
+							do: ["selectBox", "updateStartingData", "setCorner"],
 							to: "resizingBox",
 						},
 						STARTED_EDGE_RESIZING: {
-							do: ["selectBox", "updateBoxStarts", "setEdge"],
+							do: ["updateStartingData", "setEdge"],
 							to: "edgeResizingBox",
 						},
 						STARTED_PICKING_ARROW: { do: "setArrowFrom", to: "pickingArrow" },
@@ -387,7 +422,7 @@ const state = createState({
 					},
 				},
 				clickingBox: {
-					onEnter: "updateBoxStarts",
+					onEnter: "updateStartingData",
 					on: {
 						STOPPED_CLICKING_BOX: [
 							{
@@ -415,7 +450,7 @@ const state = createState({
 					},
 				},
 				draggingBoundingBox: {
-					onEnter: "updateBoxStarts",
+					onEnter: "updateStartingData",
 					on: {
 						MOVED_BOUNDING_BOX_DRAG: { to: "draggingSelectedBoxes" },
 					},
@@ -489,7 +524,7 @@ const state = createState({
 					},
 				},
 				draggingSelectedBoxes: {
-					onEnter: ["updateBoxStarts", "createCloningBoxes"],
+					onEnter: ["updateStartingData", "createCloningBoxes"],
 					onExit: "clearCloningBoxes",
 					initial: {
 						if: "isInAltMode",
@@ -970,9 +1005,32 @@ const state = createState({
 			data.arrow.to = undefined
 		},
 		// Boxes
-		updateBoxStarts(data) {
+		updateStartingData(data) {
 			const { boxes, selection } = data
 			const selectedBoxes = boxes.filter((box) => selection.includes(box.id))
+
+			const first = selectedBoxes[0]
+
+			let x = first.x
+			let maxX = first.x + first.width
+			let y = first.y
+			let maxY = first.y + first.height
+
+			for (let box of selectedBoxes) {
+				x = Math.min(x, box.x)
+				maxX = Math.max(maxX, box.x + box.width)
+				y = Math.min(y, box.y)
+				maxY = Math.max(maxY, box.y + box.height)
+			}
+
+			const bounds = {
+				x,
+				y,
+				width: maxX - x,
+				height: maxY - y,
+				maxX,
+				maxY,
+			}
 
 			for (let box of selectedBoxes) {
 				box.start = {
@@ -980,8 +1038,16 @@ const state = createState({
 					y: box.y,
 					width: box.width,
 					height: box.height,
+					nx: (box.x - bounds.x) / bounds.width,
+					ny: (box.y - bounds.y) / bounds.height,
+					nmx: (box.x + box.width - bounds.x) / bounds.width,
+					nmy: (box.y + box.height - bounds.y) / bounds.height,
+					nw: box.width / bounds.width,
+					nh: box.height / bounds.height,
 				}
 			}
+
+			data.bounds = bounds
 		},
 		setCorner(data, payload = {}) {
 			const { corner } = payload
@@ -1003,7 +1069,18 @@ const state = createState({
 				height: 0,
 				label: "",
 				color: data.currentColor,
-				start: { x, y, width: 0, height: 0 },
+				start: {
+					x,
+					y,
+					width: 0,
+					height: 0,
+					nx: 0,
+					ny: 0,
+					nmx: 1,
+					nmy: 1,
+					nw: 1,
+					nh: 1,
+				},
 			}
 		},
 		updateDrawingBox(data) {
@@ -1063,68 +1140,72 @@ const state = createState({
 			const {
 				boxes,
 				selection,
+				bounds,
 				resizing: { edge },
 			} = data
 			const index = boxes.findIndex((box) => box.id === selection[0])
 			const box = boxes[index]
 			if (!box) return
 
-			const { x, y, ox, oy } = getPoints()
+			const { x, y } = getPoints()
 
-			const { x: sx, y: sy, height: sh, width: sw } = box.start
-			const maxX = sx + sw
-			const maxY = sy + sh
-			const dx = x - ox
-			const dy = y - oy
+			// new
+			const selectedBoxes = boxes.filter((box) => selection.includes(box.id))
 
-			if (y === box.y || x === box.x) return
+			// Find min and max x of starts (this could be done once, at set starts)
 
 			switch (edge) {
-				case 0: {
-					// y
-					if (y < sy + sh) {
-						box.y = sy + dy
-						box.height = sh - dy
-					} else {
-						box.y = maxY
-						box.height = y - maxY
-					}
-					break
-				}
 				case 1: {
-					// maxX
-					if (x < sx) {
-						box.x = x
-						box.width = sx - x
-					} else {
-						box.x = sx
-						box.width = x - sx
-					}
-					break
-				}
-				case 2: {
-					// maxY
-					if (y < sy) {
-						box.y = y
-						box.height = sy - y
-					} else {
-						box.y = sy
-						box.height = y - sy
+					const width = Math.abs(x - bounds.x)
+					for (let box of selectedBoxes) {
+						box.width = box.start.nw * width
+
+						if (x > bounds.x) {
+							box.x = bounds.x + box.start.nx * width
+						} else {
+							box.x = x + (1 - box.start.nmx) * width
+						}
 					}
 					break
 				}
 				case 3: {
-					// x
-					if (x < maxX) {
-						box.x = sx + dx
-						box.width = sw - dx
-					} else {
-						box.x = maxX
-						box.width = x - maxX
+					const width = Math.abs(bounds.maxX - x)
+					for (let box of selectedBoxes) {
+						box.width = box.start.nw * width
+
+						if (x < bounds.maxX) {
+							box.x = x + box.start.nx * width
+						} else {
+							box.x = bounds.maxX + (1 - box.start.nmx) * width
+						}
 					}
 					break
 				}
-				default: {
+				case 2: {
+					const height = Math.abs(y - bounds.y)
+					for (let box of selectedBoxes) {
+						box.height = box.start.nh * height
+
+						if (y > bounds.y) {
+							box.y = bounds.y + box.start.ny * height
+						} else {
+							box.y = y + (1 - box.start.nmy) * height
+						}
+					}
+					break
+				}
+				case 0: {
+					const height = Math.abs(bounds.maxY - y)
+					for (let box of selectedBoxes) {
+						box.height = box.start.nh * height
+
+						if (y < bounds.maxY) {
+							box.y = y + box.start.ny * height
+						} else {
+							box.y = bounds.maxY + (1 - box.start.nmy) * height
+						}
+					}
+					break
 				}
 			}
 		},

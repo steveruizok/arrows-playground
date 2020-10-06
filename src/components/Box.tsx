@@ -237,7 +237,10 @@ function Box({ box, isSelected, isSelecting }: Props) {
 					}}
 				/>
 			</g>
-			<g pointerEvents={isSelected ? "all" : "none"}>
+			<g
+				pointerEvents={isSelected ? "all" : "none"}
+				opacity={isSelecting ? 0 : 1}
+			>
 				<foreignObject x="4" y="4" width="12" height="12">
 					<div
 						style={{
