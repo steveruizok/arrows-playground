@@ -21,13 +21,13 @@ export default function App() {
 			.then(function (dataUrl) {
 				var link = document.createElement("a")
 				link.href = dataUrl
-				link.download = "Download.jpg"
+				link.download = "download.png"
 				document.body.appendChild(link)
 				link.click()
 				document.body.removeChild(link)
 			})
 			.catch(function (error) {
-				console.error("oops, something went wrong!", error)
+				console.error("Couldn't save the file!", error)
 			})
 	}, [])
 
