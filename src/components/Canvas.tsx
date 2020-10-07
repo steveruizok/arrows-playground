@@ -1,6 +1,7 @@
 import * as React from "react"
 import state, { keyState } from "./state"
 import { useStateDesigner } from "@state-designer/react"
+import BoundingBox from "./BoundingBox"
 import Box from "./Box"
 import Arrow from "./Arrow"
 import Brush from "./Brush"
@@ -46,27 +47,7 @@ export default function ({ width = 5000, height = 5000 }: Props) {
 					state.send("STARTED_CLICKING_CANVAS")
 				}}
 			/>
-			{boundingBox && (
-				<rect
-					x={boundingBox.x}
-					y={boundingBox.y}
-					width={boundingBox.width}
-					height={boundingBox.height}
-					stroke="#aaf"
-					strokeWidth={2}
-					cursor="grab"
-					fill="transparent"
-					onPointerDown={(e) => {
-						state.send("STARTED_CLICKING_BOUNDING_BOX", getPoint(e))
-					}}
-					onPointerUp={(e) => {
-						state.send("STOPPED_CLICKING_BOUNDING_BOX", getPoint(e))
-					}}
-					onPointerMove={(e) =>
-						state.send("MOVED_BOUNDING_BOX_DRAG", getPoint(e))
-					}
-				/>
-			)}
+			<BoundingBox/>
 			{boxes.map((box) => (
 				<Box
 					key={box.id}
