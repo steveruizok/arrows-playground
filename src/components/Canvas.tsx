@@ -47,7 +47,7 @@ export default function ({ width = 5000, height = 5000 }: Props) {
 					state.send("STARTED_CLICKING_CANVAS")
 				}}
 			/>
-			<BoundingBox/>
+			<BoundingBox />
 			{boxes.map((box) => (
 				<Box
 					key={box.id}

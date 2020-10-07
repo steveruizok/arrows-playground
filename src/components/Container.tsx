@@ -102,6 +102,10 @@ export default React.forwardRef<HTMLDivElement>((props: Props, rCanvas) => {
 					state.send("INVERTED_ARROWS")
 					break
 				}
+				case "t": {
+					state.send("FLIPPED_ARROWS")
+					break
+				}
 				case "a": {
 					state.send("STARTED_PICKING_ARROW")
 					break
@@ -136,7 +140,51 @@ export default React.forwardRef<HTMLDivElement>((props: Props, rCanvas) => {
 					break
 				}
 				case "v": {
-					state.send("SELECTED_SELECT_TOOL")
+					if (e.metaKey) {
+						state.send("PASTE")
+					} else {
+						state.send("SELECTED_SELECT_TOOL")
+					}
+					break
+				}
+				case "z": {
+					if (e.shiftKey) {
+						state.send("REDO")
+					} else {
+						state.send("UNDO")
+					}
+					break
+				}
+				case ";": {
+					state.send("ALIGNED_LEFT")
+					break
+				}
+				case "'": {
+					state.send("ALIGNED_CENTER_X")
+					break
+				}
+				case `\\`: {
+					state.send("ALIGNED_RIGHT")
+					break
+				}
+				case `:`: {
+					state.send("ALIGNED_TOP")
+					break
+				}
+				case `"`: {
+					state.send("ALIGNED_CENTER_Y")
+					break
+				}
+				case `|`: {
+					state.send("ALIGNED_BOTTOM")
+					break
+				}
+				case `{`: {
+					state.send("STRETCHED_X")
+					break
+				}
+				case `}`: {
+					state.send("STRETCHED_Y")
 					break
 				}
 			}
@@ -170,7 +218,7 @@ export default React.forwardRef<HTMLDivElement>((props: Props, rCanvas) => {
 					break
 				}
 				case "/": {
-					state.send("FLIPPED_SELECTED_ARROW")
+					state.send("FLIPPED_ARROWS")
 					break
 				}
 			}

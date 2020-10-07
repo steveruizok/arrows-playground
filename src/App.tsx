@@ -35,10 +35,17 @@ export default function App() {
 		<div className="App">
 			<div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
 				<Container ref={rContainer} />
-				<div style={{ position: "absolute", top: 8, right: 8 }}>
+				<div style={{ position: "absolute", bottom: 8, right: 72 }}>
 					<button onClick={() => saveImage()}>Save Image</button>
 				</div>
-				<div style={{ position: "absolute", bottom: 8, left: 8 }}>
+				<div
+					style={{
+						position: "absolute",
+						bottom: 8,
+						left: 8,
+						userSelect: "none",
+					}}
+				>
 					by <a href="https://twitter.com/steveruizok">@steveruizok</a> -{" "}
 					<a href="https://github.com/steveruizok/perfect-arrows">
 						perfect-arrows

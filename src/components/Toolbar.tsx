@@ -13,7 +13,12 @@ export default function Toolbar() {
 	return (
 		<div
 			className="button-group"
-			style={{ position: "absolute", top: 8, left: 8 }}
+			style={{
+				position: "absolute",
+				top: 8,
+				left: 0,
+				userSelect: "none",
+			}}
 			onClick={(e) => e.stopPropagation()}
 		>
 			<IconButton
@@ -29,48 +34,110 @@ export default function Toolbar() {
 				event="SELECTED_BOX_TOOL"
 				shortcut="F"
 			/>
-			{hasSelectedBox && (
-				<>
-					<Divider />
-					<IconButton
-						src="arrow.svg"
-						event="STARTED_PICKING_ARROW"
-						shortcut="A"
-					/>
-				</>
-			)}
+			<Divider />
+			<IconButton
+				src="arrow.svg"
+				event="STARTED_PICKING_ARROW"
+				shortcut="A"
+				disabled={!hasSelectedBox}
+			/>
+			<IconButton
+				src="delete.svg"
+				event="DELETED_SELECTED"
+				shortcut="⌫"
+				disabled={!hasSelection}
+			/>
+			<IconButton
+				src="flip-arrow.svg"
+				event="FLIPPED_ARROWS"
+				shortcut="T"
+				disabled={!hasSelection}
+			/>
+			<IconButton
+				src="invert-arrow.svg"
+				event="INVERTED_ARROWS"
+				shortcut="R"
+				disabled={!hasSelection}
+			/>
+			<Divider />
+			<IconButton
+				src="left.svg"
+				event="ALIGNED_LEFT"
+				disabled={!hasSelectedBoxes}
+				shortcut=";"
+			/>
+			<IconButton
+				src="center-x.svg"
+				event="ALIGNED_CENTER_X"
+				disabled={!hasSelectedBoxes}
+				shortcut="'"
+			/>
+			<IconButton
+				src="right.svg"
+				event="ALIGNED_RIGHT"
+				disabled={!hasSelectedBoxes}
+				shortcut="\"
+			/>
+			<IconButton
+				src="top.svg"
+				event="ALIGNED_TOP"
+				disabled={!hasSelectedBoxes}
+				shortcut="⇧ ;"
+			/>
+			<IconButton
+				src="center-y.svg"
+				event="ALIGNED_CENTER_Y"
+				disabled={!hasSelectedBoxes}
+				shortcut="⇧ '"
+			/>
+			<IconButton
+				src="bottom.svg"
+				event="ALIGNED_BOTTOM"
+				disabled={!hasSelectedBoxes}
+				shortcut="⇧ \"
+			/>
+			<Divider />
+			<IconButton
+				src="stretch-x.svg"
+				event="STRETCHED_X"
+				disabled={!hasSelectedBoxes}
+				shortcut="⇧ ["
+			/>
+			<IconButton
+				src="stretch-y.svg"
+				event="STRETCHED_Y"
+				disabled={!hasSelectedBoxes}
+				shortcut="⇧ ]"
+			/>
 
-			{hasSelection && (
-				<>
-					<IconButton src="delete.svg" event="DELETED_SELECTED" shortcut="⌫" />
-					<IconButton
-						src="flip-arrow.svg"
-						event="FLIPPED_SELECTED_ARROW"
-						shortcut="/"
-					/>
-				</>
-			)}
-			{hasSelectedBoxes && (
-				<>
-					<Divider />
-					<IconButton src="left.svg" event="ALIGNED_LEFT" />
-					<IconButton src="center-x.svg" event="ALIGNED_CENTER_X" />
-					<IconButton src="right.svg" event="ALIGNED_RIGHT" />
-					<IconButton src="top.svg" event="ALIGNED_TOP" />
-					<IconButton src="center-y.svg" event="ALIGNED_CENTER_Y" />
-					<IconButton src="bottom.svg" event="ALIGNED_BOTTOM" />
-					<Divider />
-					<IconButton src="stretch-x.svg" event="STRETCHED_X" />
-					<IconButton src="stretch-y.svg" event="STRETCHED_Y" />
-				</>
-			)}
-			{hasManySelectedBoxes && (
-				<>
-					<Divider />
-					<IconButton src="distribute-x.svg" event="DISTRIBUTED_X" />
-					<IconButton src="distribute-y.svg" event="DISTRIBUTED_Y" />
-				</>
-			)}
+			<Divider />
+			<IconButton
+				src="distribute-x.svg"
+				event="DISTRIBUTED_X"
+				disabled={!hasManySelectedBoxes}
+			/>
+			<IconButton
+				src="distribute-y.svg"
+				event="DISTRIBUTED_Y"
+				disabled={!hasManySelectedBoxes}
+			/>
+			<span className="spacer" style={{ gridColumn: 21 }} />
+			<IconButton
+				className="rightAlign"
+				src="undo.svg"
+				event="UNDO"
+				shortcut="⌘ Z"
+				disabled={local.data.undos.length === 1}
+				style={{ gridColumn: 22 }}
+			/>
+			<IconButton
+				className="rightAlign"
+				src="redo.svg"
+				event="REDO"
+				shortcut="⌘ ⇧ Z"
+				disabled={local.data.redos.length === 0}
+				style={{ gridColumn: 23 }}
+			/>
 		</div>
 	)
 }
@@ -132,6 +199,10 @@ function IconButton({
 				backgroundImage: `url(/${src})`,
 				backgroundSize: "cover",
 				backgroundColor: isActive ? "#ccc" : "#fff",
+				opacity: props.disabled ? 0.5 : 1,
+				gridRow: 1,
+				transition: "opacity .16s",
+				...props.style,
 			}}
 			type="button"
 			onClick={() => state.send(event)}
