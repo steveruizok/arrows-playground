@@ -172,66 +172,8 @@ function Box({ box, isSelected, isSelecting }: Props) {
 				ry={4}
 				fill={isEditing ? "rgba(200,200,240,.24)" : "rgba(255, 255, 255, .5)"}
 				cursor="grab"
-				// onMouseUp={(e) => {
-				//   local.send("ENDED_BOX_DRAG")
-				//   state.send("ENDED_BOX_DRAG", { id, ...getPoint(e) })
-				// }}
-				// onMouseMove={(e) =>
-				//   state.send("MOVED_BOX_DRAG", { id, ...getPoint(e) })
-				// }
 			/>
 			<g opacity={isHovered ? 1 : 0}>
-				{/* {getEdges(box).map(([[x1, y1], [x2, y2]], i) => (
-					<Edge
-						key={i}
-						x1={x1}
-						y1={y1}
-						x2={x2}
-						y2={y2}
-						direction={i % 2}
-						onPointerDown={(e) => {
-							local.send("STARTED_EDGE_RESIZING")
-							state.send("STARTED_EDGE_RESIZING", {
-								id,
-								edge: i,
-								...getPoint(e),
-							})
-						}}
-						onPointerUp={(e) => {
-							local.send("ENDED_EDGE_RESIZING")
-							state.send("ENDED_EDGE_RESIZING", {
-								id,
-								edge: i,
-								...getPoint(e),
-							})
-						}}
-					/>
-				))}
-				{getCorners(box).map(([cx, cy], i) => (
-					<Corner
-						key={i}
-						x={cx}
-						y={cy}
-						direction={i % 2}
-						stroke={warn ? "#F00" : "#000"}
-						onPointerDown={(e) => {
-							local.send("STARTED_RESIZING")
-							state.send("STARTED_RESIZING", {
-								id,
-								corner: i,
-								...getPoint(e),
-							})
-						}}
-						onPointerUp={(e) => {
-							local.send("ENDED_RESIZING")
-							state.send("ENDED_RESIZING", {
-								id,
-								corner: i,
-								...getPoint(e),
-							})
-						}}
-					/>
-				))} */}
 				<Node
 					x={width}
 					y={height / 2}
@@ -280,9 +222,10 @@ function Box({ box, isSelected, isSelecting }: Props) {
 							display: "flex",
 							alignItems: "center",
 							justifyContent: "center",
+							width: "100%",
+							height: "100%",
+							overflow: "hidden",
 							padding: 12,
-							width: width - 24,
-							height: height - 24,
 							textAlign: "center",
 							fontSize: 13,
 							fontWeight: 700,
