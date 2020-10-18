@@ -56,6 +56,8 @@ export function getBoundingBox(boxes: IBox[]): IBounds {
 		maxY = Math.max(maxY, box.y + box.height)
 	}
 
+	console.log(maxX)
+
 	return {
 		x,
 		y,
@@ -210,6 +212,13 @@ const keyUpActions = {
 	Meta: "EXITED_META_MODE",
 	f: "SELECTED_DRAWING",
 	v: "SELECTED_SELECTING",
+	r: "INVERTED_ARROWS",
+	t: "FLIPPED_ARROWS",
+	a: "STARTED_PICKING_ARROW",
+}
+
+export function testKeyCombo(event: string, ...keys: string[]) {
+	if (keys.every((key) => pressedKeys[key])) state.send(event)
 }
 
 export function handleKeyDown(e: KeyboardEvent) {
@@ -222,11 +231,37 @@ export function handleKeyDown(e: KeyboardEvent) {
 }
 
 export function handleKeyUp(e: KeyboardEvent) {
-	pressedKeys[e.key] = false
-	const action = keyUpActions[e.key]
-	if (action) {
-		state.send(action)
+	if (
+		pressedKeys.Option ||
+		pressedKeys.Shift ||
+		pressedKeys.Meta ||
+		pressedKeys.Control
+	) {
+		testKeyCombo("ALIGNED_LEFT", "Option", "a")
+		testKeyCombo("ALIGNED_CENTER_X", "Option", "h")
+		testKeyCombo("ALIGNED_RIGHT", "Option", "d")
+		testKeyCombo("ALIGNED_TOP", "Option", "w")
+		testKeyCombo("ALIGNED_CENTER_Y", "Option", "v")
+		testKeyCombo("ALIGNED_BOTTOM", "Option", "s")
+		testKeyCombo("DISTRIBUTED_X", "Option", "Control", "h")
+		testKeyCombo("DISTRIBUTED_Y", "Option", "Control", "v")
+		testKeyCombo("STRETCHED_X", "Option", "Shift", "h")
+		testKeyCombo("STRETCHED_Y", "Option", "Shift", "v")
+		testKeyCombo("BROUGHT_FORWARD", "Meta", "]")
+		testKeyCombo("SENT_BACKWARD", "Meta", "[")
+		testKeyCombo("BROUGHT_TO_FRONT", "Meta", "Shift", "]")
+		testKeyCombo("SENT_TO_BACK", "Meta", "Shift", "[")
+		testKeyCombo("PASTED", "Meta", "v")
+		testKeyCombo("COPIED", "Meta", "c")
+		testKeyCombo("UNDO", "Meta", "z")
+		testKeyCombo("REDO", "Meta", "Shift", "z")
+		return
+	} else {
+		const action = keyUpActions[e.key]
+		if (action) state.send(action)
 	}
+
+	pressedKeys[e.key] = false
 }
 
 export function handleKeyPress(e: KeyboardEvent) {

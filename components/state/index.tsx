@@ -84,101 +84,116 @@ const state = createState({
 		SCROLLED_VIEWPORT: "updateViewBoxOnScroll",
 		UPDATED_VIEWBOX: ["updateCameraOnViewBoxChange", "updateViewBox"],
 	},
-	initial: "idle",
+	initial: "selecting",
 	states: {
-		idle: {
-			on: {
-				STARTED_POINTING_BOUNDS_EDGE: { to: "edgeResizing" },
-				STARTED_POINTING_BOUNDS_CORNER: { to: "cornerResizing" },
-				STARTED_POINTING_CANVAS: { to: "pointingCanvas" },
-				STARTED_POINTING_BOX: [
-					{ unless: "boxIsSelected", do: ["selectBox", "updateBounds"] },
-					{ to: "dragging" },
-				],
-				STARTED_POINTING_BOUNDS: { to: "dragging" },
-			},
-		},
-		pointingCanvas: {
-			on: {
-				MOVED_POINTER: { if: "distanceIsFarEnough", to: "brushSelecting" },
-				STOPPED_POINTING: {
-					do: ["clearSelection", "updateBounds"],
-					to: "idle",
-				},
-			},
-		},
-		brushSelecting: {
-			onEnter: ["startBrush", "setInitialSelectedIds"],
-			on: {
-				MOVED_POINTER: [
-					"moveBrush",
-					{
-						get: "brushSelectingBoxes",
-						if: "selectionHasChanged",
-						do: ["setSelectedIds", "updateBounds"],
-					},
-				],
-				STOPPED_POINTING: { do: "completeBrush", to: "idle" },
-			},
-		},
-		dragging: {
+		selecting: {
+			initial: "selectingIdle",
 			states: {
-				dragIdle: {
-					onEnter: ["setInitialPointer", "setInitialSnapshot"],
+				selectingIdle: {
 					on: {
-						MOVED_POINTER: {
-							do: ["moveDraggingBoxes", "moveBounds"],
-							to: "dragActive",
-						},
-						STOPPED_POINTING: { to: "idle" },
+						ALIGNED_LEFT: ["alignSelectedBoxesLeft", "updateBounds"],
+						ALIGNED_RIGHT: ["alignSelectedBoxesRight", "updateBounds"],
+						ALIGNED_CENTER_X: ["alignSelectedBoxesCenterX", "updateBounds"],
+						ALIGNED_TOP: ["alignSelectedBoxesTop", "updateBounds"],
+						ALIGNED_BOTTOM: ["alignSelectedBoxesBottom", "updateBounds"],
+						ALIGNED_CENTER_Y: ["alignSelectedBoxesCenterY", "updateBounds"],
+						DISTRIBUTED_X: ["distributeSelectedBoxesX", "updateBounds"],
+						DISTRIBUTED_Y: ["distributeSelectedBoxesY", "updateBounds"],
+						STRETCHED_X: ["stretchSelectedBoxesX", "updateBounds"],
+						STRETCHED_Y: ["stretchSelectedBoxesY", "updateBounds"],
+						STARTED_POINTING_BOUNDS_EDGE: { to: "edgeResizing" },
+						STARTED_POINTING_BOUNDS_CORNER: { to: "cornerResizing" },
+						STARTED_POINTING_CANVAS: { to: "pointingCanvas" },
+						STARTED_POINTING_BOX: [
+							{ unless: "boxIsSelected", do: ["selectBox", "updateBounds"] },
+							{ to: "dragging" },
+						],
+						STARTED_POINTING_BOUNDS: { to: "dragging" },
 					},
 				},
-				dragActive: {
+				pointingCanvas: {
 					on: {
-						MOVED_POINTER: ["moveDraggingBoxes", "moveBounds"],
+						MOVED_POINTER: { if: "distanceIsFarEnough", to: "brushSelecting" },
 						STOPPED_POINTING: {
-							do: ["updateBounds", "saveUndoState"],
-							to: "idle",
+							do: ["clearSelection", "updateBounds"],
+							to: "selectingIdle",
 						},
 					},
 				},
-			},
-		},
-		edgeResizing: {
-			initial: "edgeResizeIdle",
-			states: {
-				edgeResizeIdle: {
-					onEnter: "setEdgeResizer",
+				brushSelecting: {
+					onEnter: ["startBrush", "setInitialSelectedIds"],
 					on: {
-						MOVED_POINTER: { do: "resizeBounds", to: "edgeResizeActive" },
-						STOPPED_POINTING: { to: "idle" },
+						MOVED_POINTER: [
+							"moveBrush",
+							{
+								get: "brushSelectingBoxes",
+								if: "selectionHasChanged",
+								do: ["setSelectedIds", "updateBounds"],
+							},
+						],
+						STOPPED_POINTING: { do: "completeBrush", to: "selectingIdle" },
 					},
 				},
-				edgeResizeActive: {
-					on: {
-						MOVED_POINTER: { do: "resizeBounds" },
-						STOPPED_POINTING: { do: "saveUndoState", to: "idle" },
-					},
-				},
-			},
-		},
-		cornerResizing: {
-			initial: "cornerResizeIdle",
-			states: {
-				cornerResizeIdle: {
-					onEnter: "setCornerResizer",
-					on: {
-						MOVED_POINTER: {
-							do: "resizeBounds",
-							to: "cornerResizeActive",
+				dragging: {
+					states: {
+						dragIdle: {
+							onEnter: ["setInitialPointer", "setInitialSnapshot"],
+							on: {
+								MOVED_POINTER: {
+									do: ["moveDraggingBoxes", "moveBounds"],
+									to: "dragActive",
+								},
+								STOPPED_POINTING: { to: "selectingIdle" },
+							},
 						},
-						STOPPED_POINTING: { to: "idle" },
+						dragActive: {
+							on: {
+								MOVED_POINTER: ["moveDraggingBoxes", "moveBounds"],
+								STOPPED_POINTING: {
+									do: ["updateBounds", "saveUndoState"],
+									to: "selectingIdle",
+								},
+							},
+						},
 					},
 				},
-				cornerResizeActive: {
-					on: {
-						MOVED_POINTER: { do: "resizeBounds" },
-						STOPPED_POINTING: { do: "saveUndoState", to: "idle" },
+				edgeResizing: {
+					initial: "edgeResizeIdle",
+					states: {
+						edgeResizeIdle: {
+							onEnter: "setEdgeResizer",
+							on: {
+								MOVED_POINTER: { do: "resizeBounds", to: "edgeResizeActive" },
+								STOPPED_POINTING: { to: "selectingIdle" },
+							},
+						},
+						edgeResizeActive: {
+							on: {
+								MOVED_POINTER: { do: "resizeBounds" },
+								STOPPED_POINTING: { do: "saveUndoState", to: "selectingIdle" },
+							},
+						},
+					},
+				},
+				cornerResizing: {
+					initial: "cornerResizeIdle",
+					states: {
+						cornerResizeIdle: {
+							onEnter: "setCornerResizer",
+							on: {
+								MOVED_POINTER: {
+									do: "resizeBounds",
+									to: "cornerResizeActive",
+								},
+								STOPPED_POINTING: { to: "selectingIdle" },
+							},
+						},
+						cornerResizeActive: {
+							on: {
+								MOVED_POINTER: { do: "resizeBounds" },
+								STOPPED_POINTING: { do: "saveUndoState", to: "selectingIdle" },
+							},
+						},
 					},
 				},
 			},
@@ -557,6 +572,8 @@ const state = createState({
 			if (!bounds) return
 			bounds.x += pointer.dx
 			bounds.y += pointer.dy
+			bounds.maxX = bounds.x + bounds.width
+			bounds.maxY = bounds.y + bounds.height
 		},
 		updateBounds(data) {
 			const { selectedBoxIds, boxes } = data
@@ -620,44 +637,7 @@ const state = createState({
 			})
 			localStorage.setItem("__2_current", current)
 		},
-
-		// updateOrigin(data) {
-		//   const point = getPoint()
-		//   console.log("starting at", point)
-		//   origin.x = point.x
-		//   origin.y = point.y
-		//   cameraOrigin.x = camera.x
-		//   cameraOrigin.y = camera.y
-		// },
-		// // Selection
-		// setInitialSelection(data) {
-		//   data.initial.selected = {
-		//     boxes: data.selectedBoxIds,
-		//     arrows: data.selectedArrowIds,
-		//   }
-		// },
-		// clearSelection(data) {
-		//   data.selectedBoxIds = []
-		//   data.selectedArrowIds = []
-		// },
-		// completeSelection() {},
-		// updateSelectionBrush(data) {
-		//   const { x, y, ox, oy } = getPoints()
-
-		//   data.brush = {
-		//     x: Math.min(x, ox),
-		//     y: Math.min(y, oy),
-		//     width: Math.abs(x - ox),
-		//     height: Math.abs(y - oy),
-		//   }
-		// },
-		// setbrushSelectingToSelection(data, _, ids) {
-		//   data.selectedBoxIds = ids
-		// },
-		// pushbrushSelectingToSelection(data, _, ids) {
-		//   const { boxes } = data.initial.selected
-		//   data.selectedBoxIds = [...boxes, ...ids]
-		// },
+		// Boxes --------------------------
 		setInitialSnapshot(data) {
 			const { selectedBoxIds, boxes } = data
 			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
@@ -690,6 +670,62 @@ const state = createState({
 			data.initial.boxes = initialBoxes
 			data.bounds = bounds
 		},
+		alignSelectedBoxesLeft(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.alignBoxesLeft(selectedBoxes)
+		},
+		alignSelectedBoxesRight(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.alignBoxesRight(selectedBoxes)
+		},
+		alignSelectedBoxesTop(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.alignBoxesTop(selectedBoxes)
+		},
+		alignSelectedBoxesBottom(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.alignBoxesBottom(selectedBoxes)
+		},
+		alignSelectedBoxesCenterX(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.alignBoxesCenterX(selectedBoxes)
+		},
+		alignSelectedBoxesCenterY(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.alignBoxesCenterY(selectedBoxes)
+		},
+		distributeSelectedBoxesX(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.distributeBoxesX(selectedBoxes)
+		},
+		distributeSelectedBoxesY(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.distributeBoxesY(selectedBoxes)
+		},
+		stretchSelectedBoxesX(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.stretchBoxesX(selectedBoxes)
+		},
+		stretchSelectedBoxesY(data) {
+			const { selectedBoxIds, boxes } = data
+			const selectedBoxes = selectedBoxIds.map((id) => boxes[id])
+			BoxTransforms.stretchBoxesY(selectedBoxes)
+		},
+		updateResizingBoxesToFreeRatio() {},
+		updateResizingBoxesToLockedRatio() {},
+		updateDraggingBoxesToFreeAxes() {},
+		updateDraggingBoxesToLockedAxes() {},
+		restoreInitialBoxes() {},
+		completeSelectedBoxes() {},
 		// Drawing Arrow
 		createDrawingArrow() {},
 		setDrawingArrowTarget() {},
@@ -700,7 +736,7 @@ const state = createState({
 		flipSelectedArrows() {},
 		invertSelectedArrows() {},
 		// Arrows to Boxes
-		updateArrowsToSelectedBoxes() {},
+		oxes() {},
 		flipArrowsToSelectedBoxes() {},
 		invertArrowsToSelectedBoxes() {},
 		// Drawing Box
@@ -709,15 +745,7 @@ const state = createState({
 		completeDrawingBox() {},
 		clearDrawingBox() {},
 		// Boxes
-		dragSelectedBoxes() {},
-		edgeResizeSelectedBoxes() {},
-		cornerResizeSelectedBoxes() {},
-		updateResizingBoxesToFreeRatio() {},
-		updateResizingBoxesToLockedRatio() {},
-		updateDraggingBoxesToFreeAxes() {},
-		updateDraggingBoxesToLockedAxes() {},
-		restoreInitialBoxes() {},
-		completeSelectedBoxes() {},
+
 		// Clones
 		clearDraggingBoxesClones() {},
 		createDraggingBoxesClones() {},

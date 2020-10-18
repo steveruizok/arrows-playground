@@ -1,5 +1,5 @@
 import * as React from "react"
-import state from "../../state"
+import state from "../state"
 import { useStateDesigner } from "@state-designer/react"
 
 export default function Model() {
@@ -55,7 +55,7 @@ export default function Model() {
 							strokeWidth={2}
 							fill="rgba(255, 255, 255, 1)"
 						/>
-						<text x="12" y="122" x="452" opacity={0.5}>
+						<text x="12" y="122" opacity={0.5}>
 							ViewBox
 						</text>
 					</g>

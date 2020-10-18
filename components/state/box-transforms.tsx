@@ -231,6 +231,9 @@ export function getEdgeResizer(boxes: IBox[], edge: number) {
 				break
 			}
 		}
+
+		current.maxX = current.x + current.width
+		current.maxY = current.y + current.height
 	}
 }
 
@@ -348,6 +351,9 @@ export function getCornerResizer(boxes: IBox[], corner: number) {
 				break
 			}
 		}
+
+		current.maxX = current.x + current.width
+		current.maxY = current.y + current.height
 	}
 }
 

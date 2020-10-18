@@ -1064,10 +1064,10 @@
   dependencies:
     mkdirp "^1.0.4"
 
-"@state-designer/core@1.2.26":
-  version "1.2.26"
-  resolved "https://registry.yarnpkg.com/@state-designer/core/-/core-1.2.26.tgz#dd288d797422bfa4e7e7b2d5f2c9a323943ac41c"
-  integrity sha512-7dkxW7y0KJrnwwZGEU4rQ5P1lfP2sx6SyR23tTlObJ+kYxL6Vruk4Q6rrCkgARNexzSr1JH9V1uS/6lThKjnFg==
+"@state-designer/core@1.2.31":
+  version "1.2.31"
+  resolved "https://registry.yarnpkg.com/@state-designer/core/-/core-1.2.31.tgz#6884e07da766a234fff5cb4f576a56cf5aa6c026"
+  integrity sha512-TIYb21arYP1fR9X/Qzti2/9AiN2xpZrWGHrd34Vg1Pd4FLu+j+rZ74ECqT6nTeJh8K50fC9kRAg+9toXKPHBLA==
   dependencies:
     immer "^7.0.0"
     lodash "^4.17.15"
@@ -1075,12 +1075,12 @@
     object.entries "^1.1.1"
     object.fromentries "^2.0.2"
 
-"@state-designer/react@^1.2.26":
-  version "1.2.26"
-  resolved "https://registry.yarnpkg.com/@state-designer/react/-/react-1.2.26.tgz#8269429f4b2bb1ba6f4bf51e86ca49c20794e7f0"
-  integrity sha512-e9wRAWXPmU6I7HIDMDm02Ae2+Cxe+PwYbGH6qhMtETkic2a/UNBihBC7c6JRK4PJYt30PHCYtUjZDRYZMgXA+w==
+"@state-designer/react@^1.2.31":
+  version "1.2.31"
+  resolved "https://registry.yarnpkg.com/@state-designer/react/-/react-1.2.31.tgz#99e3787f56d08c680b483a998424d5684d707cfa"
+  integrity sha512-3u+uRsvFRmYjhjfUX6KLt/PaswYVyca5d1bBNyzuzAXtHo/IvZc7SCGvrnguFYM5Oh6vCvNW3lACAw5ZKISmNA==
   dependencies:
-    "@state-designer/core" "1.2.26"
+    "@state-designer/core" "1.2.31"
     lodash-es "^4.17.15"
 
 "@stitches/core@^0.0.2":

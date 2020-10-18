@@ -1,26 +1,26 @@
 {
-  "name": "arrows-playground",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "@state-designer/react": "^1.2.26",
-    "@stitches/react": "^0.0.2",
-    "framer-motion": "^2.7.9",
-    "lodash": "^4.17.20",
-    "next": "9.5.4",
-    "perfect-arrows": "^0.3.3",
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0",
-    "react-no-ssr": "^1.1.0",
-    "use-resize-observer": "^6.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^14.11.5",
-    "typescript": "^4.0.3"
-  }
+	"name": "arrows-playground",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start"
+	},
+	"dependencies": {
+		"@state-designer/react": "^1.2.31",
+		"@stitches/react": "^0.0.2",
+		"framer-motion": "^2.7.9",
+		"lodash": "^4.17.20",
+		"next": "9.5.4",
+		"perfect-arrows": "^0.3.3",
+		"react": "^16.14.0",
+		"react-dom": "^16.14.0",
+		"react-no-ssr": "^1.1.0",
+		"use-resize-observer": "^6.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "^14.11.5",
+		"typescript": "^4.0.3"
+	}
 }

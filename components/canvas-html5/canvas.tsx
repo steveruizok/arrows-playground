@@ -1,14 +1,14 @@
 import { memo, useState, useRef, useEffect } from "react"
 import Surface, { HitType } from "./surface"
 import state from "../state"
+import { styled } from "../theme"
 
-// const hitEvents: Record<HitType, string> = {
-// 	[HitType.Bounds]: "STARTED_POINTING_BOUNDS",
-// 	[HitType.BoundEdge]: "STARTED_POINTING_BOUNDS_EDGE",
-// 	[HitType.BoundCorner]: "STARTED_POINTING_BOUNDS_CORNER",
-// 	[HitType.Box]: "STARTED_POINTING_BOX",
-// 	[HitType.Canvas]: "STARTED_POINTING_CANVAS",
-// }
+const CanvasBackground = styled.div({
+	width: "100vw",
+	height: "100vh",
+	overflow: "hidden",
+	bg: "$canvas",
+})
 
 type Props = React.HTMLProps<HTMLCanvasElement> & {
 	width: number
@@ -47,12 +47,7 @@ function Canvas({ width, height, ...rest }: Props) {
 	}
 
 	return (
-		<div
-			style={{
-				width,
-				height,
-				overflow: "hidden",
-			}}
+		<CanvasBackground
 			onWheel={handleWheel}
 			onPointerDown={(e) => {
 				const hit = rSurface.current.hitTest()
@@ -96,7 +91,7 @@ function Canvas({ width, height, ...rest }: Props) {
 					transform: `scale(${1 / dpr})`,
 				}}
 			/>
-		</div>
+		</CanvasBackground>
 	)
 }
 

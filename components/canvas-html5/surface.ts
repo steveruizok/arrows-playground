@@ -2,6 +2,7 @@ import {
 	doBoxesCollide,
 	pointInRectangle,
 	pointInCorner,
+	getCorners,
 	pointInEdge,
 } from "../utils"
 import { S } from "@state-designer/react"
@@ -30,7 +31,9 @@ class Surface {
 	_stroke: string
 	_fill: string
 	_unsub: () => void
+	_diffIndex = 0
 	_looping = true
+	hit: Hit = { type: HitType.Canvas }
 
 	cvs: HTMLCanvasElement
 	ctx: CanvasRenderingContext2D
@@ -53,30 +56,43 @@ class Surface {
 
 	private loop = () => {
 		if (!this._looping) return
+		this.hit = this.hitTest()
+		this.cvs.style.setProperty("cursor", this.getCursor(this.hit))
+
+		if (state.index === this._diffIndex) {
+			requestAnimationFrame(this.loop)
+			return
+		}
+
+		this._diffIndex = state.index
 		this.clear()
 		this.draw()
+
 		requestAnimationFrame(this.loop)
 	}
 
 	destroy() {
-		this._looping = false
 		// this._unsub()
+		this._looping = false
 	}
 
 	draw() {
-		const { camera, brush, bounds, boxes, selectedBoxIds } = this.state.data
-		const hit = this.hitTest()
+		this.setupCamera()
+		this.renderBoxes()
+		if (!this.state.isIn("dragging")) {
+			this.renderSelection()
+			this.renderBrush()
+		}
+	}
+
+	setupCamera() {
+		const { camera } = this.state.data
 
 		const dpr = window.devicePixelRatio || 1
 
 		this.ctx.translate(-camera.x * dpr, -camera.y * dpr)
 		this.ctx.scale(camera.zoom * dpr, camera.zoom * dpr)
 		this.lineWidth = 1 / camera.zoom
-
-		this.renderBoxes()
-		this.renderSelection()
-		this.renderBrush()
-		this.cvs.style.setProperty("cursor", this.getCursor(hit))
 	}
 
 	renderBoxes() {
@@ -86,21 +102,32 @@ class Surface {
 	}
 
 	renderSelection() {
-		const { bounds, boxes, selectedBoxIds } = this.state.data
+		const { camera, bounds, boxes, selectedBoxIds } = this.state.data
 
 		if (selectedBoxIds.length > 0) {
 			this.save()
 			this.stroke = "blue"
 
-			if (bounds) {
-				// draw bounds outline
-				this.drawBox(bounds)
-			}
-
 			// draw box outlines
 			for (let id of selectedBoxIds) {
 				let box = boxes[id]
-				this.drawBox(box)
+				this.ctx.strokeRect(box.x, box.y, box.width, box.height)
+			}
+
+			if (bounds) {
+				// draw bounds outline
+				this.ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
+				this.save()
+				this.fill = "blue"
+				for (let [x, y] of getCorners(
+					bounds.x,
+					bounds.y,
+					bounds.width,
+					bounds.height
+				)) {
+					this.drawDot({ x, y }, 3 / camera.zoom)
+				}
+				this.restore()
 			}
 
 			this.restore()
@@ -125,18 +152,35 @@ class Surface {
 		if (bounds) {
 			// Test if point collides the (padded) bounds
 			if (pointInRectangle(point, bounds, 16)) {
-				// Test if point collides a (padded) corner
-				const corner = pointInCorner(point, bounds, 8)
-				if (corner !== undefined) {
-					return { type: HitType.BoundsCorner, corner }
+				const { x, y, width, height, maxX, maxY } = bounds
+				const p = 5 / camera.zoom
+				const pp = p * 2
+
+				const cornerBoxes = [
+					{ x: x - p, y: y - p, width: pp, height: pp },
+					{ x: maxX - p, y: y - p, width: pp, height: pp },
+					{ x: maxX - p, y: maxY - p, width: pp, height: pp },
+					{ x: x - p, y: maxY - p, width: pp, height: pp },
+				]
+
+				for (let i = 0; i < cornerBoxes.length; i++) {
+					if (pointInRectangle(point, cornerBoxes[i])) {
+						return { type: HitType.BoundsCorner, corner: i }
+					}
 				}
 
-				// Test if point collides a (padded) edge
-				const edge = pointInEdge(point, bounds, 8)
-				if (edge !== undefined) {
-					return { type: HitType.BoundsEdge, edge }
-				}
+				const edgeBoxes = [
+					{ x: x + p, y: y - p, width: width - pp, height: pp },
+					{ x: maxX - p, y: y + p, width: pp, height: height - pp },
+					{ x: x + p, y: maxY - p, width: width - pp, height: pp },
+					{ x: x - p, y: y + p, width: pp, height: height - pp },
+				]
 
+				for (let i = 0; i < edgeBoxes.length; i++) {
+					if (pointInRectangle(point, edgeBoxes[i])) {
+						return { type: HitType.BoundsEdge, edge: i }
+					}
+				}
 				// Point is in the middle of the bounds
 				return { type: HitType.Bounds }
 			}
@@ -173,11 +217,12 @@ class Surface {
 		ctx.stroke(path)
 	}
 
-	drawCorner(point: IPoint) {
+	drawDot(point: IPoint, radius = 2) {
 		const { ctx } = this
 		const { x, y } = point
 		ctx.beginPath()
-		ctx.ellipse(x, y, 2, 2, 0, 0, PI2, false)
+		ctx.ellipse(x, y, radius, radius, 0, 0, PI2, false)
+		ctx.fill()
 	}
 
 	drawEdge(start: IPoint, end: IPoint) {
