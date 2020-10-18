@@ -1,7 +1,7 @@
 import * as React from "react"
-import * as I from "../../types"
+import { IBrush } from "../../types"
 
-type Props = I.Brush
+type Props = IBrush
 
 export default function Brush({ x0, y0, x1, y1 }: Props) {
 	return (

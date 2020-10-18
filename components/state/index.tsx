@@ -8,12 +8,13 @@ import {
 	IArrow,
 	IBoxSnapshot,
 } from "../../types"
+import Surface from "../canvas-html5/surface"
 import {
 	pressedKeys,
 	viewBoxToCamera,
 	getBoundingBox,
 	getInitialData,
-} from "./utils"
+} from "../utils"
 import * as BoxTransforms from "./box-transforms"
 import clamp from "lodash/clamp"
 
@@ -30,6 +31,7 @@ export const pointerState = createState({
 const state = createState({
 	data: {
 		...getInitialData(),
+		surface: undefined as Surface,
 		pointer: {
 			x: 0,
 			y: 0,
@@ -48,6 +50,12 @@ const state = createState({
 			height: 0,
 			scrollX: 0,
 			scrollY: 0,
+			document: {
+				x: 0,
+				y: 0,
+				width: 0,
+				height: 0,
+			},
 		},
 		spawning: {
 			boxes: {} as Record<string, IBox>,
@@ -66,6 +74,7 @@ const state = createState({
 		},
 	},
 	on: {
+		UPDATED_SURFACE: (d, p) => (d.surface = p),
 		UNDO: "loadUndoState",
 		REDO: "loadRedoState",
 		STARTED_POINTING: { secretlyDo: "setInitialPointer" },
@@ -86,13 +95,13 @@ const state = createState({
 					{ unless: "boxIsSelected", do: ["selectBox", "updateBounds"] },
 					{ to: "dragging" },
 				],
-				STARTED_DRAGGING_BOUNDS: { to: "dragging" },
+				STARTED_POINTING_BOUNDS: { to: "dragging" },
 			},
 		},
 		pointingCanvas: {
 			on: {
 				MOVED_POINTER: { if: "distanceIsFarEnough", to: "brushSelecting" },
-				STOPPED_POINTING_CANVAS: {
+				STOPPED_POINTING: {
 					do: ["clearSelection", "updateBounds"],
 					to: "idle",
 				},
@@ -448,13 +457,18 @@ const state = createState({
 
 		// Camera -------------------------
 		updateCameraZoom(data, change = 0) {
-			const { camera, pointer } = data
+			const { camera, viewBox, pointer } = data
 			const prev = camera.zoom
 			const next = clamp(prev - change, 0.25, 2)
 			const delta = next - prev
 			data.camera.zoom = next
 			data.camera.x += ((camera.x + pointer.x) * delta) / prev
 			data.camera.y += ((camera.y + pointer.y) * delta) / prev
+
+			viewBox.document.x = camera.x
+			viewBox.document.y = camera.y
+			viewBox.document.width = viewBox.width / camera.zoom
+			viewBox.document.height = viewBox.height / camera.zoom
 		},
 		updateCameraPoint(data, delta: IPoint) {
 			data.camera.x += delta.x
@@ -470,11 +484,15 @@ const state = createState({
 
 		// Viewbox ------------------------
 		updateViewBox(data, frame: IFrame) {
-			const { viewBox } = data
+			const { viewBox, camera } = data
 			viewBox.x = frame.x
 			viewBox.y = frame.y
 			viewBox.width = frame.width
 			viewBox.height = frame.height
+			viewBox.document.x = camera.x
+			viewBox.document.y = camera.y
+			viewBox.document.width = viewBox.width / camera.zoom
+			viewBox.document.height = viewBox.height / camera.zoom
 		},
 		updateViewBoxOnScroll(data, point: IPoint) {
 			const { viewBox } = data
