@@ -1,5 +1,5 @@
 import * as React from "react"
-import state from "../../state"
+import state from "../../../components/state"
 import { IBounds } from "../../../types"
 import Corner from "./corner"
 import Edge from "./edge"

@@ -1,11 +1,7 @@
-import Canvas from "../components/canvas"
-import Toolbar from "../components/toolbar/toolbar"
+import dynamic from "next/dynamic"
+
+const App = dynamic(() => import("../components/app"))
 
 export default function Home() {
-	return (
-		<div>
-			<Canvas />
-			<Toolbar />
-		</div>
-	)
+	return <App />
 }

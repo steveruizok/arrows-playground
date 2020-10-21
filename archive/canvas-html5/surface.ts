@@ -4,10 +4,10 @@ import {
 	pointInCorner,
 	getCorners,
 	pointInEdge,
-} from "../utils"
+} from "../../components/utils"
 import { S } from "@state-designer/react"
 import { IBox, IPoint, IBrush, IFrame, IBounds } from "../../types"
-import state, { pointerState } from "../state"
+import state, { pointerState } from "../../components/state"
 
 const PI2 = Math.PI * 2
 

@@ -1,4 +1,4 @@
-import { IBoxSnapshot, IPoint, IPointer, IBounds, IBox } from "../../types"
+import { IBoxSnapshot, IPoint, IBounds, IBox } from "../../types"
 
 export function stretchBoxesX(boxes: IBox[]) {
 	const [first, ...rest] = boxes
@@ -145,54 +145,63 @@ export function getBoundingBox(boxes: IBox[]): IBounds {
 
 function getSnapshots(
 	boxes: IBox[],
-	initial: IBounds
+	bounds: IBounds
 ): Record<string, IBoxSnapshot> {
-	return Object.fromEntries(
-		boxes.map((box) => [
-			box.id,
-			{
-				...box,
-				nx: (box.x - initial.x) / initial.width,
-				ny: (box.y - initial.y) / initial.height,
-				nmx: 1 - (box.x + box.width - initial.x) / initial.width,
-				nmy: 1 - (box.y + box.height - initial.y) / initial.height,
-				nw: box.width / initial.width,
-				nh: box.height / initial.height,
-			},
-		])
-	)
+	const acc = {} as Record<string, IBoxSnapshot>
+
+	for (let box of boxes) {
+		acc[box.id] = {
+			...box,
+			nx: (box.x - bounds.x) / bounds.width,
+			ny: (box.y - bounds.y) / bounds.height,
+			nmx: 1 - (box.x + box.width - bounds.x) / bounds.width,
+			nmy: 1 - (box.y + box.height - bounds.y) / bounds.height,
+			nw: box.width / bounds.width,
+			nh: box.height / bounds.height,
+		}
+	}
+
+	return acc
 }
 
-export function getEdgeResizer(boxes: IBox[], edge: number) {
-	const initial = getBoundingBox(boxes)
-	const snapshots = getSnapshots(boxes, initial)
+export function getEdgeResizer(
+	initialBoxes: IBox[],
+	initialBounds: IBounds,
+	edge: number
+) {
+	const snapshots = getSnapshots(initialBoxes, initialBounds)
 
-	// Mutable values of the bounding box, used internally
-	let { x: _x0, y: _y0, maxX: _x1, maxY: _y1 } = initial
+	let { x: x0, y: y0, maxX: x1, maxY: y1 } = initialBounds
+	let { x: mx, y: my, width: mw, height: mh } = initialBounds
 
-	// A function to mutate arguments (boxes and current bounds) based on edge and point.
-	return function edgeResize(boxes: IBox[], current: IBounds, point: IPointer) {
+	return function edgeResize(point: IPoint, boxes: IBox[], bounds: IBounds) {
+		const { x, y } = point
 		if (edge === 0 || edge === 2) {
-			edge === 0 ? (_y0 = point.y) : (_y1 = point.y)
-			current.y = _y0 < _y1 ? _y0 : _y1
-			current.height = Math.abs(_y1 - _y0)
-			current.maxY = current.y + current.height
+			edge === 0 ? (y0 = y) : (y1 = y)
+			my = y0 < y1 ? y0 : y1
+			mh = Math.abs(y1 - y0)
 			for (let box of boxes) {
 				const { ny, nmy, nh } = snapshots[box.id]
-				box.y = current.y + (_y1 < _y0 ? nmy : ny) * current.height
-				box.height = nh * current.height
+				box.y = my + (y1 < y0 ? nmy : ny) * mh
+				box.height = nh * mh
 			}
 		} else {
-			edge === 1 ? (_x1 = point.x) : (_x0 = point.x)
-			current.x = _x0 < _x1 ? _x0 : _x1
-			current.width = Math.abs(_x1 - _x0)
-			current.maxX = current.x + current.width
+			edge === 1 ? (x1 = x) : (x0 = x)
+			mx = x0 < x1 ? x0 : x1
+			mw = Math.abs(x1 - x0)
 			for (let box of boxes) {
 				const { nx, nmx, nw } = snapshots[box.id]
-				box.x = current.x + (_x1 < _x0 ? nmx : nx) * current.width
-				box.width = nw * current.width
+				box.x = mx + (x1 < x0 ? nmx : nx) * mw
+				box.width = nw * mw
 			}
 		}
+
+		bounds.x = mx
+		bounds.y = my
+		bounds.width = mw
+		bounds.height = mh
+		bounds.maxX = mx + mw
+		bounds.maxY = my + mh
 	}
 }
 
@@ -204,43 +213,41 @@ export function getEdgeResizer(boxes: IBox[], edge: number) {
  * const resizer = getCornerResizer(selectedBoxes, 3)
  * resizer(selectedBoxes, )
  */
-export function getCornerResizer(boxes: IBox[], corner: number) {
-	const initial = getBoundingBox(boxes)
-	const snapshots = getSnapshots(boxes, initial)
+export function getCornerResizer(
+	initialBoxes: IBox[],
+	initialBounds: IBounds,
+	corner: number
+) {
+	const snapshots = getSnapshots(initialBoxes, initialBounds)
 
-	// Mutable values of the bounding box, used internally
-	let { x: _x0, y: _y0, maxX: _x1, maxY: _y1 } = initial
+	let { x: x0, y: y0, maxX: x1, maxY: y1 } = initialBounds
+	let { x: mx, y: my, width: mw, height: mh } = initialBounds
 
-	/**
-	 * A function that will resize the boxes. This is designed to mutate its arguments.
-	 * @param boxes The current array of boxes.
-	 * @param current The current bounding box.
-	 * @param point The pointer.
-	 */
-	function cornerResizer(boxes: IBox[], current: IBounds, point: IPointer) {
-		// Top
-		corner < 2 ? (_y0 = point.y) : (_y1 = point.y)
-		current.y = _y0 < _y1 ? _y0 : _y1
-		current.height = Math.abs(_y1 - _y0)
-		current.maxY = current.y + current.height
+	return function cornerResizer(point: IPoint, boxes: IBox[], bounds: IBounds) {
+		const { x, y } = point
+		corner < 2 ? (y0 = y) : (y1 = y)
+		my = y0 < y1 ? y0 : y1
+		mh = Math.abs(y1 - y0)
 
-		corner === 1 || corner === 2 ? (_x1 = point.x) : (_x0 = point.x)
-		current.x = _x0 < _x1 ? _x0 : _x1
-		current.width = Math.abs(_x1 - _x0)
-		current.maxX = current.x + current.width
+		corner === 1 || corner === 2 ? (x1 = x) : (x0 = x)
+		mx = x0 < x1 ? x0 : x1
+		mw = Math.abs(x1 - x0)
 
 		for (let box of boxes) {
 			const { nx, nmx, nw, ny, nmy, nh } = snapshots[box.id]
-			box.x = current.x + (_x1 < _x0 ? nmx : nx) * current.width
-			box.y = current.y + (_y1 < _y0 ? nmy : ny) * current.height
-			box.width = nw * current.width
-			box.height = nh * current.height
+			box.x = mx + (x1 < x0 ? nmx : nx) * mw
+			box.y = my + (y1 < y0 ? nmy : ny) * mh
+			box.width = nw * mw
+			box.height = nh * mh
 		}
 
-		return current
+		bounds.x = mx
+		bounds.y = my
+		bounds.width = mw
+		bounds.height = mh
+		bounds.maxX = mx + mw
+		bounds.maxY = my + mh
 	}
-
-	return cornerResizer
 }
 
 export type EdgeResizer = ReturnType<typeof getEdgeResizer>

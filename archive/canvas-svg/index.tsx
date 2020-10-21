@@ -1,4 +1,4 @@
-import state from "../state"
+import state from "../../components/state"
 import NoSSR from "react-no-ssr"
 import CanvasBackground from "./canvas-background"
 import CanvasForeground from "./canvas-foreground"

@@ -1,5 +1,5 @@
 import * as React from "react"
-import state from "../state"
+import state from "../../components/state"
 
 type Props = {
 	size: { width: number; height: number }

@@ -33,6 +33,9 @@ const { css, styled } = createStyled({
 			$1: "12px",
 			$2: "14px",
 		},
+		fonts: {
+			$body: "Helvetica Neue",
+		},
 	},
 	utils: {
 		m: () => (value: number | string) => ({
@@ -98,6 +101,18 @@ const { css, styled } = createStyled({
 		fadeBg: () => (value: number) => ({
 			transition: `background-color ${value}s`,
 		}),
+	},
+})
+
+css.global({
+	html: {
+		margin: 0,
+		padding: 0,
+		fontFamily: "$body",
+		fontSize: "$2",
+	},
+	body: {
+		overscrollBehavior: "none",
 	},
 })
 

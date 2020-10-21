@@ -1,11 +1,7 @@
 import { getBoxToBoxArrow, ArrowOptions } from "perfect-arrows"
-import { browser } from "process"
-import uniqueId from "lodash/clamp"
-import clamp from "lodash/clamp"
+import uniqueId from "lodash/uniqueId"
 import { IPoint, IBounds, IFrame, IBox, IArrow } from "../types"
 import state from "./state/index"
-
-const RESET_LOCAL_DATA = true
 
 export let scale = 1
 export const pressedKeys = {} as Record<string, boolean>
@@ -14,10 +10,7 @@ export const origin = { x: 0, y: 0 }
 export const cameraOrigin = { x: 0, y: 0 }
 export const camera = { x: 0, y: 0, cx: 0, cy: 0, width: 0, height: 0 }
 
-let dpr = 1
-if (browser) {
-	dpr = window?.devicePixelRatio || 1
-}
+let dpr = 2
 
 export function viewBoxToCamera(
 	point: IPoint,
@@ -56,8 +49,6 @@ export function getBoundingBox(boxes: IBox[]): IBounds {
 		maxY = Math.max(maxY, box.y + box.height)
 	}
 
-	console.log(maxX)
-
 	return {
 		x,
 		y,
@@ -78,9 +69,7 @@ export function mapValues<P, T>(
 }
 
 export function getInitialIndex() {
-	if (browser) {
-		return "0"
-	}
+	if (typeof window === undefined || !window.localStorage) return "0"
 
 	let curIndex = "1"
 	let prevIndex: any = localStorage.getItem("__index")
@@ -92,77 +81,6 @@ export function getInitialIndex() {
 	}
 
 	localStorage.setItem("__index", JSON.stringify(curIndex))
-}
-
-/**
- * Get the initial data for the store.
- */
-export function getInitialData(): {
-	boxes: Record<string, IBox>
-	arrows: Record<string, IArrow>
-	selectedBoxIds: string[]
-	selectedArrowIds: string[]
-} {
-	let previous = null
-	let initial: {
-		boxes: Record<string, IBox>
-		arrows: Record<string, IArrow>
-		selectedBoxIds: string[]
-		selectedArrowIds: string[]
-	}
-
-	if (browser) {
-		previous = localStorage.getItem("__2_current")
-	}
-
-	if (previous === null || RESET_LOCAL_DATA) {
-		// Initial Boxes
-		const initBoxes = {
-			box_a0: {
-				id: "box_a0",
-				x: 100,
-				y: 100,
-				width: 100,
-				height: 100,
-				label: "",
-				color: "rgba(255, 255, 255, 1)",
-			},
-			box_a1: {
-				id: "box_a1",
-				x: 200,
-				y: 300,
-				width: 100,
-				height: 100,
-				label: "",
-				color: "rgba(255, 255, 255, 1)",
-			},
-		}
-
-		// Initial Arrows
-		const a = initBoxes["box_a0"]
-		const b = initBoxes["box_a1"]
-		const initArrows = {
-			arrow_a0: {
-				id: "arrow_a0",
-				from: "init0",
-				to: "init1",
-				flip: false,
-				label: "",
-				points: getArrow(a, b),
-			},
-		}
-
-		initial = {
-			boxes: initBoxes,
-			arrows: initArrows,
-			selectedArrowIds: [],
-			selectedBoxIds: [],
-		}
-	} else {
-		initial = JSON.parse(previous)
-	}
-
-	return initial
 }
 
 /**
@@ -199,9 +117,15 @@ const keyDownActions = {
 	Escape: "CANCELLED",
 	Alt: "ENTERED_ALT_MODE",
 	" ": "ENTERED_SPACE_MODE",
+	Backspace: "DELETED_SELECTED",
 	Shift: "ENTERED_SHIFT_MODE",
 	Control: "ENTERED_CONTROL_MODE",
 	Meta: "ENTERED_META_MODE",
+	f: "SELECTED_BOX_TOOL",
+	v: "SELECTED_SELECT_TOOL",
+	r: "INVERTED_ARROWS",
+	t: "FLIPPED_ARROWS",
+	a: "STARTED_PICKING_ARROW",
 }
 
 const keyUpActions = {
@@ -210,8 +134,7 @@ const keyUpActions = {
 	Shift: "EXITED_SHIFT_MODE",
 	Control: "EXITED_CONTROL_MODE",
 	Meta: "EXITED_META_MODE",
-	f: "SELECTED_DRAWING",
-	v: "SELECTED_SELECTING",
+	v: "SELECTED_SELECT_TOOL",
 	r: "INVERTED_ARROWS",
 	t: "FLIPPED_ARROWS",
 	a: "STARTED_PICKING_ARROW",
@@ -224,9 +147,8 @@ export function testKeyCombo(event: string, ...keys: string[]) {
 export function handleKeyDown(e: KeyboardEvent) {
 	pressedKeys[e.key] = true
 	const action = keyDownActions[e.key]
-	if (action) {
-		state.send(action)
-	}
+	if (action) state.send(action)
+
 	// Handle shift here?
 }
 
@@ -342,13 +264,15 @@ export function doBoxesCollide(a: IFrame, b: IFrame) {
 export function getBox(
 	x: number,
 	y: number,
+	z: number,
 	width: number,
 	height: number
 ): IBox {
 	return {
-		id: uniqueId(),
+		id: "box" + uniqueId(),
 		x,
 		y,
+		z,
 		width,
 		height,
 		label: "",

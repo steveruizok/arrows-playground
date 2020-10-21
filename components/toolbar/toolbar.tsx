@@ -1,3 +1,4 @@
+import * as React from "react"
 import state from "../state"
 import { useStateDesigner } from "@state-designer/react"
 import { ToolbarWrapper, ButtonGroup, Divider } from "./styled"
@@ -6,7 +7,7 @@ import IconButton from "./icon-button"
 export default function Toolbar() {
 	const local = useStateDesigner(state)
 
-	const { selectedBoxIds, selectedArrowIds } = local.data
+	const { selectedBoxIds = [], selectedArrowIds = [] } = local.data
 
 	const hasSelection = selectedBoxIds.length + selectedArrowIds.length > 0
 	const hasSelectedBox = selectedBoxIds.length > 0
@@ -18,30 +19,24 @@ export default function Toolbar() {
 			<ButtonGroup>
 				<IconButton
 					src="Select"
-					isActive={local.isIn("selecting")}
+					isActive={local.isIn("selectTool")}
 					event="SELECTED_SELECT_TOOL"
 					shortcut="V"
 				/>
 				<IconButton
 					src="Box"
-					isActive={local.isIn("drawing")}
+					isActive={local.isIn("boxTool")}
 					onClick={() => state.send("SELECTED_BOX_TOOL")}
 					event="SELECTED_BOX_TOOL"
 					shortcut="F"
 				/>
-				<Divider />
 				<IconButton
 					src="Arrow"
 					event="STARTED_PICKING_ARROW"
 					shortcut="A"
 					disabled={!hasSelectedBox}
 				/>
-				<IconButton
-					src="Delete"
-					event="DELETED_SELECTED"
-					shortcut="⌫"
-					disabled={!hasSelection}
-				/>
+				<Divider />
 				<IconButton
 					src="FlipArrow"
 					event="FLIPPED_ARROWS"
@@ -116,13 +111,20 @@ export default function Toolbar() {
 					disabled={!hasManySelectedBoxes}
 					shortcut="⌥ ⌃ V"
 				/>
+				<Divider />
+				<IconButton
+					src="Delete"
+					event="DELETED_SELECTED"
+					shortcut="⌫"
+					disabled={!hasSelection}
+				/>
 			</ButtonGroup>
 			<ButtonGroup>
 				<IconButton
 					src="Undo"
 					event="UNDO"
 					shortcut="⌘ Z"
-					disabled={local.values.undosLength === 1}
+					disabled={local.values.undosLength === 0}
 				/>
 				<IconButton
 					src="Redo"

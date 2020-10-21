@@ -1,5 +1,5 @@
 import * as React from "react"
-import state from "../state"
+import state from "../../components/state"
 
 import { useStateDesigner } from "@state-designer/react"
 import { IBox } from "../../types"

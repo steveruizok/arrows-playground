@@ -1,7 +1,11 @@
-import { memo, useState, useRef, useEffect } from "react"
-import Surface, { HitType } from "./surface"
+import * as React from "react"
+import { memo, useRef, useEffect } from "react"
+import Surface from "./surface"
 import state from "../state"
 import { styled } from "../theme"
+import * as PIXI from "pixi.js"
+
+let app: PIXI.Application
 
 const CanvasBackground = styled.div({
 	width: "100vw",
@@ -16,18 +20,31 @@ type Props = React.HTMLProps<HTMLCanvasElement> & {
 }
 
 function Canvas({ width, height, ...rest }: Props) {
-	const rSurface = useRef<Surface>(null)
+	const rSurface = useRef<Surface>()
+	const rBackground = useRef<HTMLDivElement>(null)
 	const rCanvas = useRef<HTMLCanvasElement>(null)
-
-	const dpr = window.devicePixelRatio || 1
 
 	useEffect(() => {
 		if (rSurface.current) rSurface.current.destroy()
 		const canvas = rCanvas.current
-		rSurface.current = new Surface(canvas)
+		const bg = rBackground.current
+		if (!(canvas && bg)) return
 
+		app = new PIXI.Application({
+			resolution: window.devicePixelRatio,
+			view: canvas,
+		})
+
+		app.resizeTo = bg
+		app.resize()
+
+		rSurface.current = new Surface(canvas, app)
 		state.send("UPDATED_SURFACE", rSurface.current)
-	}, [rCanvas, width, height])
+	}, [rCanvas])
+
+	useEffect(() => {
+		app.resize()
+	}, [width, height])
 
 	function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
 		const { deltaX, deltaY } = e
@@ -48,9 +65,13 @@ function Canvas({ width, height, ...rest }: Props) {
 
 	return (
 		<CanvasBackground
+			ref={rBackground}
 			onWheel={handleWheel}
 			onPointerDown={(e) => {
-				const hit = rSurface.current.hitTest()
+				const surface = rSurface.current
+				if (!surface) return
+
+				const hit = surface.hitTest()
 
 				switch (hit.type) {
 					case "bounds": {
@@ -84,11 +105,11 @@ function Canvas({ width, height, ...rest }: Props) {
 		>
 			<canvas
 				ref={rCanvas}
-				width={width * dpr}
-				height={height * dpr}
+				width={width * 2}
+				height={height * 2}
 				style={{
 					transformOrigin: "top left",
-					transform: `scale(${1 / dpr})`,
+					transform: `scale(${1 / 2})`,
 				}}
 			/>
 		</CanvasBackground>
