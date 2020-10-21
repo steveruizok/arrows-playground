@@ -5,6 +5,8 @@ import state from "../state"
 import { styled } from "../theme"
 import * as PIXI from "pixi.js"
 
+const dpr = window.devicePixelRatio || 1
+
 let app: PIXI.Application
 
 const CanvasBackground = styled.div({
@@ -105,11 +107,11 @@ function Canvas({ width, height, ...rest }: Props) {
 		>
 			<canvas
 				ref={rCanvas}
-				width={width * 2}
-				height={height * 2}
+				width={width * dpr}
+				height={height * dpr}
 				style={{
 					transformOrigin: "top left",
-					transform: `scale(${1 / 2})`,
+					transform: `scale(${1 / dpr})`,
 				}}
 			/>
 		</CanvasBackground>

@@ -8,6 +8,8 @@ const arrowCache: number[][] = []
 
 const PI2 = Math.PI * 2
 
+const dpr = window.devicePixelRatio || 1
+
 export enum HitType {
 	Canvas = "canvas",
 	Bounds = "bounds",
@@ -38,6 +40,7 @@ class Surface {
 
 	app: PIXI.Application
 	graphics: PIXI.Graphics
+	scale: PIXI.ObservablePoint
 
 	state = state
 	hoveredId = ""
@@ -48,13 +51,19 @@ class Surface {
 		this.graphics = new PIXI.Graphics()
 
 		this.app.renderer.backgroundColor = 0xefefef
+		this.scale = new PIXI.ObservablePoint(
+			() => {},
+			this.app,
+			state.data.camera.zoom * dpr,
+			state.data.camera.zoom * dpr
+		)
 
 		const setup = () => {
 			const { graphics } = this
 			//Start the game loop
 			const boxes = Object.values(steady.boxes)
 
-			graphics.lineStyle(1, 0x000000, 1)
+			graphics.lineStyle(1 / state.data.camera.zoom, 0x000000, 1)
 			graphics.beginFill(0xffffff, 0.9)
 			for (let box of boxes) {
 				graphics.drawRect(box.x, box.y, box.width, box.height)
@@ -66,7 +75,7 @@ class Surface {
 		}
 
 		const gameLoop = (delta: number) => {
-			const { graphics } = this
+			this.setupCamera()
 
 			this.hit = this.hitTest()
 			this.cvs.style.setProperty("cursor", this.getCursor(this.hit))
@@ -167,11 +176,17 @@ class Surface {
 	setupCamera() {
 		const { camera } = this.state.data
 
-		const dpr = window.devicePixelRatio || 1
-
-		this.ctx.translate(-camera.x * dpr, -camera.y * dpr)
-		this.ctx.scale(camera.zoom * dpr, camera.zoom * dpr)
-		this.lineWidth = 1 / camera.zoom
+		this.graphics.setTransform(
+			-camera.x,
+			-camera.y,
+			camera.zoom,
+			camera.zoom,
+			0,
+			0,
+			0,
+			0,
+			0
+		)
 	}
 
 	forceCompute() {
@@ -199,7 +214,7 @@ class Surface {
 	drawBoxes() {
 		const { graphics } = this
 		const boxes = Object.values(steady.boxes)
-		graphics.lineStyle(1, 0x000000, 1)
+		graphics.lineStyle(1 / this.state.data.camera.zoom, 0x000000, 1)
 		graphics.beginFill(0xffffff, 0.9)
 
 		for (let box of boxes) {
@@ -208,7 +223,7 @@ class Surface {
 
 		const allSpawningBoxes = Object.values(steady.spawning.boxes)
 		if (allSpawningBoxes.length > 0) {
-			graphics.lineStyle(1, 0x0000ff, 1)
+			graphics.lineStyle(1 / this.state.data.camera.zoom, 0x0000ff, 1)
 
 			for (let box of allSpawningBoxes) {
 				graphics.drawRect(box.x, box.y, box.width, box.height)
@@ -223,7 +238,7 @@ class Surface {
 		const { boxes, bounds } = steady
 		const { camera, selectedBoxIds } = this.state.data
 
-		graphics.lineStyle(1, 0x0000ff, 1)
+		graphics.lineStyle(1 / camera.zoom, 0x0000ff, 1)
 
 		if (selectedBoxIds.length > 0) {
 			// draw box outlines
@@ -233,7 +248,7 @@ class Surface {
 			}
 		}
 
-		if (bounds) {
+		if (bounds && selectedBoxIds.length > 0) {
 			// draw bounds outline
 			graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
 			graphics.beginFill(0x0000ff, 1)
@@ -243,15 +258,19 @@ class Surface {
 				bounds.width,
 				bounds.height
 			)) {
-				graphics.drawCircle(x, y, 3)
+				graphics.drawCircle(x, y, 3 / camera.zoom)
 			}
 			graphics.endFill()
 		}
 
 		if (this.hit.type === "box") {
-			graphics.lineStyle(1.5, 0x0000ff, 1)
+			graphics.lineStyle(1.5 / camera.zoom, 0x0000ff, 1)
 			const box = steady.boxes[this.hit.id]
-			graphics.drawRect(box.x, box.y, box.width, box.height)
+			if (!box) {
+				this.hit = { type: HitType.Canvas }
+			} else {
+				graphics.drawRect(box.x, box.y, box.width, box.height)
+			}
 		}
 	}
 
