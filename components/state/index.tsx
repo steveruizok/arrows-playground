@@ -108,6 +108,7 @@ const state = createState({
 			states: {
 				selectingIdle: {
 					on: {
+						CANCELLED: "clearSelection",
 						SELECTED_BOX_TOOL: { to: "boxTool" },
 						DELETED_SELECTED: {
 							if: "hasSelected",
@@ -525,7 +526,7 @@ const state = createState({
 		updateCameraZoom(data, change = 0) {
 			const { camera, viewBox, pointer } = data
 			const prev = camera.zoom
-			const next = clamp(prev - change, 0.5, 3)
+			const next = clamp(prev - change, 0.25, 100)
 			const delta = next - prev
 			camera.zoom = next
 			camera.x += ((camera.x + pointer.x) * delta) / prev

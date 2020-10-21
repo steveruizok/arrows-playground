@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js"
-import { doBoxesCollide, pointInRectangle, getCorners } from "../utils"
+import { doBoxesCollide, pointInRectangle, getCorners, camera } from "../utils"
 import { getArrow, getBoxToBoxArrow } from "perfect-arrows"
 import { IBox, IPoint, IBrush, IFrame, IArrow, IArrowType } from "../../types"
 import state, { pointerState, steady } from "../state"
@@ -367,7 +367,8 @@ class Surface {
 		if (!brush) return
 
 		const { x0, y0, x1, y1 } = brush
-		graphics.beginFill(0x000000, 0.05)
+		graphics.lineStyle(1 / this.state.data.camera.zoom, 0x00aaff, 1)
+		graphics.beginFill(0x00aaff, 0.05)
 		graphics.drawRect(
 			Math.min(x1, x0),
 			Math.min(y1, y0),
