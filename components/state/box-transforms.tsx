@@ -143,218 +143,104 @@ export function getBoundingBox(boxes: IBox[]): IBounds {
 	}
 }
 
-export function getEdgeResizer(boxes: IBox[], edge: number) {
-	const bounds = getBoundingBox(boxes)
-
-	const snapshots: Record<string, IBoxSnapshot> = Object.fromEntries(
+function getSnapshots(
+	boxes: IBox[],
+	initial: IBounds
+): Record<string, IBoxSnapshot> {
+	return Object.fromEntries(
 		boxes.map((box) => [
 			box.id,
 			{
 				...box,
-				nx: (box.x - bounds.x) / bounds.width,
-				ny: (box.y - bounds.y) / bounds.height,
-				nmx: (box.x + box.width - bounds.x) / bounds.width,
-				nmy: (box.y + box.height - bounds.y) / bounds.height,
-				nw: box.width / bounds.width,
-				nh: box.height / bounds.height,
+				nx: (box.x - initial.x) / initial.width,
+				ny: (box.y - initial.y) / initial.height,
+				nmx: 1 - (box.x + box.width - initial.x) / initial.width,
+				nmy: 1 - (box.y + box.height - initial.y) / initial.height,
+				nw: box.width / initial.width,
+				nh: box.height / initial.height,
 			},
 		])
 	)
+}
 
+export function getEdgeResizer(boxes: IBox[], edge: number) {
+	const initial = getBoundingBox(boxes)
+	const snapshots = getSnapshots(boxes, initial)
+
+	// Mutable values of the bounding box, used internally
+	let { x: _x0, y: _y0, maxX: _x1, maxY: _y1 } = initial
+
+	// A function to mutate arguments (boxes and current bounds) based on edge and point.
 	return function edgeResize(boxes: IBox[], current: IBounds, point: IPointer) {
-		const { x, y } = point
-		let snap: IBoxSnapshot
-
-		switch (edge) {
-			case 0: {
-				// Top
-				const belowMax = y > bounds.maxY
-				current.y = belowMax ? bounds.maxY : point.y
-				current.height = Math.abs(point.y - bounds.maxY)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.height = snap.nh * current.height
-					box.y = belowMax
-						? bounds.maxY + (1 - snap.nmy) * current.height
-						: y + snap.ny * current.height
-				}
-
-				break
+		if (edge === 0 || edge === 2) {
+			edge === 0 ? (_y0 = point.y) : (_y1 = point.y)
+			current.y = _y0 < _y1 ? _y0 : _y1
+			current.height = Math.abs(_y1 - _y0)
+			current.maxY = current.y + current.height
+			for (let box of boxes) {
+				const { ny, nmy, nh } = snapshots[box.id]
+				box.y = current.y + (_y1 < _y0 ? nmy : ny) * current.height
+				box.height = nh * current.height
 			}
-			case 1: {
-				// Right
-				const leftOfMin = x < bounds.x
-				current.x = leftOfMin ? point.x : bounds.x
-				current.width = Math.abs(point.x - bounds.x)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.width = snap.nw * current.width
-					box.x = leftOfMin
-						? x + (1 - snap.nmx) * current.width
-						: bounds.x + snap.nx * current.width
-				}
-
-				break
-			}
-			case 2: {
-				// Bottom
-				const aboveMin = y < bounds.y
-				current.y = aboveMin ? point.y : bounds.y
-				current.height = Math.abs(point.y - bounds.y)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.height = snap.nh * current.height
-					box.y = aboveMin
-						? y + (1 - snap.nmy) * current.height
-						: bounds.y + snap.ny * current.height
-				}
-
-				break
-			}
-			case 3: {
-				// Left
-				const rightOfMax = x > bounds.maxX
-				current.x = rightOfMax ? bounds.maxX : point.x
-				current.width = Math.abs(point.x - bounds.maxX)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.width = snap.nw * current.width
-					box.x = rightOfMax
-						? bounds.maxX + (1 - snap.nmx) * current.width
-						: x + snap.nx * current.width
-				}
-
-				break
+		} else {
+			edge === 1 ? (_x1 = point.x) : (_x0 = point.x)
+			current.x = _x0 < _x1 ? _x0 : _x1
+			current.width = Math.abs(_x1 - _x0)
+			current.maxX = current.x + current.width
+			for (let box of boxes) {
+				const { nx, nmx, nw } = snapshots[box.id]
+				box.x = current.x + (_x1 < _x0 ? nmx : nx) * current.width
+				box.width = nw * current.width
 			}
 		}
-
-		current.maxX = current.x + current.width
-		current.maxY = current.y + current.height
 	}
 }
 
+/**
+ * Returns a function that can be used to calculate corner resize transforms.
+ * @param boxes An array of the boxes being resized.
+ * @param corner A number representing the corner being dragged. Top Left: 0, Top Right: 1, Bottom Right: 2, Bottom Left: 3.
+ * @example
+ * const resizer = getCornerResizer(selectedBoxes, 3)
+ * resizer(selectedBoxes, )
+ */
 export function getCornerResizer(boxes: IBox[], corner: number) {
-	const bounds = getBoundingBox(boxes)
+	const initial = getBoundingBox(boxes)
+	const snapshots = getSnapshots(boxes, initial)
 
-	const snapshots: Record<string, IBoxSnapshot> = Object.fromEntries(
-		boxes.map((box) => [
-			box.id,
-			{
-				...box,
-				nx: (box.x - bounds.x) / bounds.width,
-				ny: (box.y - bounds.y) / bounds.height,
-				nmx: (box.x + box.width - bounds.x) / bounds.width,
-				nmy: (box.y + box.height - bounds.y) / bounds.height,
-				nw: box.width / bounds.width,
-				nh: box.height / bounds.height,
-			},
-		])
-	)
+	// Mutable values of the bounding box, used internally
+	let { x: _x0, y: _y0, maxX: _x1, maxY: _y1 } = initial
 
-	return function cornerResize(
-		boxes: IBox[],
-		current: IBounds,
-		point: IPointer
-	) {
-		const { x, y } = point
-		let snap: IBoxSnapshot
+	/**
+	 * A function that will resize the boxes. This is designed to mutate its arguments.
+	 * @param boxes The current array of boxes.
+	 * @param current The current bounding box.
+	 * @param point The pointer.
+	 */
+	function cornerResizer(boxes: IBox[], current: IBounds, point: IPointer) {
+		// Top
+		corner < 2 ? (_y0 = point.y) : (_y1 = point.y)
+		current.y = _y0 < _y1 ? _y0 : _y1
+		current.height = Math.abs(_y1 - _y0)
+		current.maxY = current.y + current.height
 
-		const leftOfMin = x < bounds.x
-		const rightOfMax = x > bounds.maxX
-		const aboveMin = y < bounds.y
-		const belowMax = y > bounds.maxY
+		corner === 1 || corner === 2 ? (_x1 = point.x) : (_x0 = point.x)
+		current.x = _x0 < _x1 ? _x0 : _x1
+		current.width = Math.abs(_x1 - _x0)
+		current.maxX = current.x + current.width
 
-		switch (corner) {
-			case 0: {
-				// Top Left
-				current.x = rightOfMax ? bounds.maxX : point.x
-				current.y = belowMax ? bounds.maxY : point.y
-				current.width = Math.abs(point.x - bounds.maxX)
-				current.height = Math.abs(point.y - bounds.maxY)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.width = snap.nw * current.width
-					box.x = rightOfMax
-						? bounds.maxX + (1 - snap.nmx) * current.width
-						: x + snap.nx * current.width
-					box.height = snap.nh * current.height
-					box.y = belowMax
-						? bounds.maxY + (1 - snap.nmy) * current.height
-						: y + snap.ny * current.height
-				}
-
-				break
-			}
-			case 1: {
-				current.x = leftOfMin ? point.x : bounds.x
-				current.y = belowMax ? bounds.maxY : point.y
-				current.width = Math.abs(point.x - bounds.x)
-				current.height = Math.abs(point.y - bounds.maxY)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.width = snap.nw * current.width
-					box.x = leftOfMin
-						? x + (1 - snap.nmx) * current.width
-						: bounds.x + snap.nx * current.width
-					box.height = snap.nh * current.height
-					box.y = belowMax
-						? bounds.maxY + (1 - snap.nmy) * current.height
-						: y + snap.ny * current.height
-				}
-
-				break
-			}
-			case 2: {
-				current.x = leftOfMin ? point.x : bounds.x
-				current.y = aboveMin ? point.y : bounds.y
-				current.width = Math.abs(point.x - bounds.x)
-				current.height = Math.abs(point.y - bounds.y)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.width = snap.nw * current.width
-					box.x = leftOfMin
-						? x + (1 - snap.nmx) * current.width
-						: bounds.x + snap.nx * current.width
-					box.height = snap.nh * current.height
-					box.y = aboveMin
-						? y + (1 - snap.nmy) * current.height
-						: bounds.y + snap.ny * current.height
-				}
-
-				break
-			}
-			case 3: {
-				current.x = rightOfMax ? bounds.maxX : point.x
-				current.y = aboveMin ? point.y : bounds.y
-				current.width = Math.abs(point.x - bounds.maxX)
-				current.height = Math.abs(point.y - bounds.y)
-
-				for (let box of boxes) {
-					snap = snapshots[box.id]
-					box.width = snap.nw * current.width
-					box.x = rightOfMax
-						? bounds.maxX + (1 - snap.nmx) * current.width
-						: x + snap.nx * current.width
-					box.height = snap.nh * current.height
-					box.y = aboveMin
-						? y + (1 - snap.nmy) * current.height
-						: bounds.y + snap.ny * current.height
-				}
-
-				break
-			}
+		for (let box of boxes) {
+			const { nx, nmx, nw, ny, nmy, nh } = snapshots[box.id]
+			box.x = current.x + (_x1 < _x0 ? nmx : nx) * current.width
+			box.y = current.y + (_y1 < _y0 ? nmy : ny) * current.height
+			box.width = nw * current.width
+			box.height = nh * current.height
 		}
 
-		current.maxX = current.x + current.width
-		current.maxY = current.y + current.height
+		return current
 	}
+
+	return cornerResizer
 }
 
 export type EdgeResizer = ReturnType<typeof getEdgeResizer>

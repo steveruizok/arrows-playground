@@ -6,8 +6,8 @@ import useWindowEvents from "./hooks/useWindowEvents"
 import useViewBox from "./hooks/useViewBox"
 
 import HTMLCanvas from "./canvas-html5/canvas"
-import ZoomIndicator from "./overlays/zoom-indicator"
-import Positions from "./overlays/positions"
+import ZoomIndicator from "./overlay/zoom-indicator"
+import Positions from "./overlay/overlay"
 
 const Container = styled.div({
 	width: "100vw",

@@ -250,7 +250,10 @@ class Surface {
 	getCursor(hit: Hit) {
 		const { isIn } = this.state
 		if (isIn("dragging")) {
-			return "grab"
+			return "grabbing"
+		}
+		if (isIn("brushSelecting")) {
+			return "crosshair"
 		}
 
 		switch (hit.type) {
@@ -265,7 +268,7 @@ class Surface {
 				return hit.edge % 2 === 0 ? "ns-resize" : "ew-resize"
 			}
 			case "canvas": {
-				return "pointer"
+				return "default"
 			}
 		}
 	}
