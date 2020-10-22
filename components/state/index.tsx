@@ -19,6 +19,19 @@ import clamp from "lodash/clamp"
 import uniqueId from "lodash/uniqueId"
 import { v4 as uuid } from "uuid"
 
+import * as Comlink from "comlink"
+
+// type GetFromWorker = (
+// 	type: "stretchBoxesX" | "stretchBoxesY",
+// 	payload: IBox[]
+// ) => Promise<IBox[]>
+
+type GetFromWorker = (type: string, payload: any) => Promise<any>
+
+const getFromWorker = Comlink.wrap<GetFromWorker>(
+	new Worker("service.worker.js")
+)
+
 // let surface: Surface | undefined = undefined
 const id = uuid()
 
@@ -55,6 +68,10 @@ export const steady = {
 		},
 		boxes: {} as Record<string, IBoxSnapshot>,
 	},
+}
+
+function setSteady(id: string, box: IBox) {
+	steady[id] = box
 }
 
 const state = createState({
@@ -144,17 +161,26 @@ const state = createState({
 					},
 				},
 				brushSelecting: {
-					onEnter: ["startBrush", "setInitialSelectedIds"],
+					onEnter: [
+						"startBrushWithWorker",
+						// "startBrush",
+						"setInitialSelectedIds",
+					],
 					on: {
+						FORCED_IDS: (d, p) => (d.selectedBoxIds = p),
 						MOVED_POINTER: [
 							"moveBrush",
-							{
-								get: "brushSelectingBoxes",
-								if: "selectionHasChanged",
-								do: ["setSelectedIds", "updateBounds"],
-							},
+							"setSelectedIdsFromWorker",
+							// {
+							// 	get: "brushSelectingBoxes",
+							// 	if: "selectionHasChanged",
+							// 	do: ["setSelectedIds"],
+							// },
 						],
-						STOPPED_POINTING: { do: "completeBrush", to: "selectingIdle" },
+						STOPPED_POINTING: {
+							do: ["completeBrush", "updateBounds"],
+							to: "selectingIdle",
+						},
 					},
 				},
 				dragging: {
@@ -589,6 +615,22 @@ const state = createState({
 			}
 			selecter = getBoxSelecter(Object.values(boxes), { x, y })
 		},
+		startBrushWithWorker(data) {
+			const { boxes, initial } = steady
+			const { pointer, viewBox, camera } = data
+			const { x, y } = viewBoxToCamera(pointer, viewBox, camera)
+			steady.brush = {
+				x0: initial.pointer.x,
+				y0: initial.pointer.y,
+				x1: x,
+				y1: y,
+			}
+
+			getFromWorker("selecter", {
+				initialBoxes: Object.values(boxes),
+				origin: { x, y },
+			})
+		},
 		moveBrush(data) {
 			const { brush } = steady
 			const { pointer, viewBox, camera } = data
@@ -606,6 +648,13 @@ const state = createState({
 		selectBox(data, payload = {}) {
 			const { id } = payload
 			data.selectedBoxIds = [id]
+		},
+		setSelectedIdsFromWorker() {
+			getFromWorker("selected", pointerState.data.document).then((r) => {
+				if (r.length !== state.data.selectedBoxIds.length) {
+					state.send("FORCED_IDS", r)
+				}
+			})
 		},
 		setSelectedIds(data, _, selectedBoxIds: string[]) {
 			data.selectedBoxIds = selectedBoxIds
@@ -886,10 +935,10 @@ const state = createState({
 		resetBoxes(data, count) {
 			const boxes = Array.from(Array(parseInt(count))).map((_, i) => ({
 				id: "box_a" + i,
-				x: 64 + Math.random() * 900,
-				y: 64 + Math.random() * 500,
-				width: 5 + Math.random() * 32,
-				height: 5 + Math.random() * 32,
+				x: -1500 + Math.random() * 3000,
+				y: -1500 + Math.random() * 3000,
+				width: 32 + Math.random() * 64,
+				height: 32 + Math.random() * 64,
 				label: "",
 				color: "#FFF",
 				z: i,
@@ -920,6 +969,26 @@ const state = createState({
 
 			data.selectedBoxIds = []
 			data.selectedArrowIds = []
+		},
+	},
+	asyncs: {
+		async stretchSelectedBoxesX(data) {
+			const { boxes } = steady
+			const selectedBoxes = data.selectedBoxIds.map((id) => boxes[id])
+			const next = await getFromWorker("stretchBoxesX", selectedBoxes)
+
+			for (let box of next) {
+				steady.boxes[box.id] = box
+			}
+		},
+		async stretchSelectedBoxesY(data) {
+			const { boxes } = steady
+			const selectedBoxes = data.selectedBoxIds.map((id) => boxes[id])
+			const next = await getFromWorker("stretchBoxesY", selectedBoxes)
+
+			for (let box of next) {
+				steady.boxes[box.id] = box
+			}
 		},
 	},
 	values: {

@@ -1,8 +1,17 @@
 import * as PIXI from "pixi.js"
 import { doBoxesCollide, pointInRectangle, getCorners, camera } from "../utils"
 import { getArrow, getBoxToBoxArrow } from "perfect-arrows"
-import { IBox, IPoint, IBrush, IFrame, IArrow, IArrowType } from "../../types"
+import {
+	IBox,
+	IPoint,
+	IBounds,
+	IBrush,
+	IFrame,
+	IArrow,
+	IArrowType,
+} from "../../types"
 import state, { pointerState, steady } from "../state"
+import * as Comlink from "comlink"
 
 const arrowCache: number[][] = []
 
@@ -24,6 +33,12 @@ export type Hit =
 	| { type: HitType.BoundsCorner; corner: number }
 	| { type: HitType.BoundsEdge; edge: number }
 	| { type: HitType.Box; id: string }
+
+type ServiceRequest = (type: string, payload: any) => Promise<Hit>
+
+const getFromWorker = Comlink.wrap<ServiceRequest>(
+	new Worker("service.worker.js")
+)
 
 class Surface {
 	_lineWidth = 2
@@ -61,7 +76,8 @@ class Surface {
 		const setup = () => {
 			const { graphics } = this
 			//Start the game loop
-			const boxes = Object.values(steady.boxes)
+			const boxes = Object.values(steady.boxes).sort((a, b) => b.z - a.z)
+			getFromWorker("updateHitTree", boxes)
 
 			graphics.lineStyle(1 / state.data.camera.zoom, 0x000000, 1)
 			graphics.beginFill(0xffffff, 0.9)
@@ -74,11 +90,21 @@ class Surface {
 			this.app.ticker.add((delta) => gameLoop(delta))
 		}
 
+		const setHit = async () => {
+			this.hit = await getFromWorker("hitTest", {
+				point: pointerState.data.document,
+				bounds: steady.bounds,
+				zoom: this.state.data.camera.zoom,
+			})
+			this.cvs.style.setProperty("cursor", this.getCursor(this.hit))
+		}
+
 		const gameLoop = (delta: number) => {
 			this.setupCamera()
 
-			this.hit = this.hitTest()
-			this.cvs.style.setProperty("cursor", this.getCursor(this.hit))
+			if (state.isIn("selectingIdle")) {
+				setHit()
+			}
 
 			let id = ""
 			if (this.hit.type === "box") id = this.hit.id
@@ -95,8 +121,11 @@ class Surface {
 				return
 			}
 
-			this.allBoxes = Object.values(steady.boxes)
-			this.allBoxes = this.allBoxes.sort((a, b) => b.z - a.z)
+			if (state.isIn("selectingIdle")) {
+				this.allBoxes = Object.values(steady.boxes)
+				this.allBoxes = this.allBoxes.sort((a, b) => b.z - a.z)
+				getFromWorker("updateHitTree", this.allBoxes)
+			}
 
 			this.clear()
 			this.draw()
@@ -248,7 +277,11 @@ class Surface {
 			}
 		}
 
-		if (bounds && selectedBoxIds.length > 0) {
+		if (
+			bounds &&
+			selectedBoxIds.length > 0 &&
+			!this.state.isIn("brushSelecting")
+		) {
 			// draw bounds outline
 			graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
 			graphics.beginFill(0x0000ff, 1)
@@ -276,8 +309,8 @@ class Surface {
 
 	hitTest(): Hit {
 		const point = pointerState.data.document
-		const { boxes, bounds } = steady
-		const { camera, viewBox, selectedBoxIds } = this.state.data
+		const { bounds } = steady
+		const { camera, viewBox } = this.state.data
 
 		if (bounds) {
 			// Test if point collides the (padded) bounds
@@ -318,7 +351,7 @@ class Surface {
 
 		// Either we don't have bounds or we're out of bounds
 		for (let box of this.allBoxes.filter((box) =>
-			doBoxesCollide(box, state.data.viewBox.document)
+			doBoxesCollide(box, viewBox.document)
 		)) {
 			// Test if point collides the (padded) box
 			if (pointInRectangle(point, box)) {
@@ -524,6 +557,10 @@ class Surface {
 
 	restore() {
 		this.ctx.restore()
+	}
+
+	resize() {
+		this.app.resize()
 	}
 
 	// Getters / Setters ----------------
