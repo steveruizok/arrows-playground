@@ -46,23 +46,35 @@ export function distributeBoxesX(boxes: IBox[]) {
 	}
 }
 export function distributeBoxesY(boxes: IBox[]) {
-	const [first, ...rest] = boxes
-	let min = first.y
-	let max = first.y + first.height
-	let sum = first.height
+	const len = boxes.length
+	const sorted = [...boxes].sort((a, b) => a.y - b.y)
+	let min = sorted[0].y
 
-	for (let box of rest) {
-		min = Math.min(min, box.y)
-		max = Math.max(max, box.y + box.height)
-		sum += box.height
+	sorted.sort((a, b) => a.y + a.height - b.y - b.height)
+	let last = sorted[len - 1]
+	let max = last.y + last.height
+
+	let range = max - min
+	let step = range / len
+	let box: IBox
+	for (let i = 0; i < len - 1; i++) {
+		box = sorted[i]
+		box.y = min + step * i
 	}
 
-	let t = min
-	const gap = (max - min - sum) / (boxes.length - 1)
-	for (let box of [...boxes].sort((a, b) => a.y - b.y)) {
-		box.y = t
-		t += box.height + gap
-	}
+	// let t = min
+	// const gap = (max - min - sum) / (boxes.length - 1)
+	// for (let box of [...boxes].sort((a, b) => a.y - b.y)) {
+	// 	box.y = t
+	// 	t += box.height + gap
+	// }
+	// console.log(max, sum, gap)
+
+	// for (let box of rest) {
+	// 	min = Math.min(min, box.y)
+	// 	max = Math.max(max, box.y + box.height)
+	// 	sum += box.height
+	// }
 }
 export function alignBoxesCenterX(boxes: IBox[]) {
 	let midX = 0

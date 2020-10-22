@@ -70,10 +70,6 @@ export const steady = {
 	},
 }
 
-function setSteady(id: string, box: IBox) {
-	steady[id] = box
-}
-
 const state = createState({
 	data: {
 		selectedArrowIds: [] as string[],
@@ -105,8 +101,9 @@ const state = createState({
 			},
 		},
 	},
-	onEnter: "updateBounds",
+	onEnter: ["saveUndoState", "updateBounds"],
 	on: {
+		FORCED_IDS: (d, p) => (d.selectedBoxIds = p),
 		RESET_BOXES: "resetBoxes",
 		// UPDATED_SURFACE: (d, p) => (surface = p),
 		UNDO: ["loadUndoState", "updateBounds"],
@@ -129,18 +126,63 @@ const state = createState({
 						SELECTED_BOX_TOOL: { to: "boxTool" },
 						DELETED_SELECTED: {
 							if: "hasSelected",
-							do: ["saveUndoState", "deleteSelected", "updateBounds"],
+							do: [
+								"saveUndoState",
+								"deleteSelected",
+								"updateBounds",
+								"saveUndoState",
+							],
 						},
-						ALIGNED_LEFT: ["alignSelectedBoxesLeft", "updateBounds"],
-						ALIGNED_RIGHT: ["alignSelectedBoxesRight", "updateBounds"],
-						ALIGNED_CENTER_X: ["alignSelectedBoxesCenterX", "updateBounds"],
-						ALIGNED_TOP: ["alignSelectedBoxesTop", "updateBounds"],
-						ALIGNED_BOTTOM: ["alignSelectedBoxesBottom", "updateBounds"],
-						ALIGNED_CENTER_Y: ["alignSelectedBoxesCenterY", "updateBounds"],
-						DISTRIBUTED_X: ["distributeSelectedBoxesX", "updateBounds"],
-						DISTRIBUTED_Y: ["distributeSelectedBoxesY", "updateBounds"],
-						STRETCHED_X: ["stretchSelectedBoxesX", "updateBounds"],
-						STRETCHED_Y: ["stretchSelectedBoxesY", "updateBounds"],
+						ALIGNED_LEFT: [
+							"alignSelectedBoxesLeft",
+							"updateBounds",
+							"saveUndoState",
+						],
+						ALIGNED_RIGHT: [
+							"alignSelectedBoxesRight",
+							"updateBounds",
+							"saveUndoState",
+						],
+						ALIGNED_CENTER_X: [
+							"alignSelectedBoxesCenterX",
+							"updateBounds",
+							"saveUndoState",
+						],
+						ALIGNED_TOP: [
+							"alignSelectedBoxesTop",
+							"updateBounds",
+							"saveUndoState",
+						],
+						ALIGNED_BOTTOM: [
+							"alignSelectedBoxesBottom",
+							"updateBounds",
+							"saveUndoState",
+						],
+						ALIGNED_CENTER_Y: [
+							"alignSelectedBoxesCenterY",
+							"updateBounds",
+							"saveUndoState",
+						],
+						DISTRIBUTED_X: [
+							"distributeSelectedBoxesX",
+							"updateBounds",
+							"saveUndoState",
+						],
+						DISTRIBUTED_Y: [
+							"distributeSelectedBoxesY",
+							"updateBounds",
+							"saveUndoState",
+						],
+						STRETCHED_X: [
+							"stretchSelectedBoxesX",
+							"updateBounds",
+							"saveUndoState",
+						],
+						STRETCHED_Y: [
+							"stretchSelectedBoxesY",
+							"updateBounds",
+							"saveUndoState",
+						],
 						STARTED_POINTING_BOUNDS_EDGE: { to: "edgeResizing" },
 						STARTED_POINTING_BOUNDS_CORNER: { to: "cornerResizing" },
 						STARTED_POINTING_CANVAS: { to: "pointingCanvas" },
@@ -162,12 +204,12 @@ const state = createState({
 				},
 				brushSelecting: {
 					onEnter: [
+						"clearSelection",
 						"startBrushWithWorker",
 						// "startBrush",
 						"setInitialSelectedIds",
 					],
 					on: {
-						FORCED_IDS: (d, p) => (d.selectedBoxIds = p),
 						MOVED_POINTER: [
 							"moveBrush",
 							"setSelectedIdsFromWorker",
@@ -627,7 +669,6 @@ const state = createState({
 			}
 
 			getFromWorker("selecter", {
-				initialBoxes: Object.values(boxes),
 				origin: { x, y },
 			})
 		},
@@ -722,8 +763,14 @@ const state = createState({
 		},
 
 		// Undo / Redo --------------------
-		saveUndoState(data: any) {
-			const { boxes, arrows, selectedBoxIds, selectedArrowIds } = data
+		saveUndoState(data) {
+			const { boxes, arrows } = steady
+			const { selectedBoxIds, selectedArrowIds } = data
+
+			getFromWorker("updateTree", {
+				boxes: Object.values(boxes),
+			})
+
 			const current = JSON.stringify({
 				boxes,
 				arrows,
@@ -901,7 +948,7 @@ const state = createState({
 					height: Math.abs(pointer.y - initial.pointer.y),
 					label: "",
 					color: "#FFF",
-					z: Object.keys(boxes).length,
+					z: Object.keys(boxes).length + 1,
 				},
 			}
 		},
@@ -969,6 +1016,10 @@ const state = createState({
 
 			data.selectedBoxIds = []
 			data.selectedArrowIds = []
+
+			getFromWorker("updateTree", {
+				boxes: Object.values(boxes),
+			})
 		},
 	},
 	asyncs: {

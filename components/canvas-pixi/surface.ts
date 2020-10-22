@@ -136,50 +136,7 @@ class Surface {
 		this.app.loader.load(setup)
 
 		this.app.start()
-
-		// this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D
-		// this.stroke = "#000"
-		// this.fill = "rgba(255, 255, 255, .5)"
-		// this.save()
-
-		// this.allBoxes = Object.values(state.data.boxes).sort((a, b) => b.z - a.z)
-		// this.computeArrows()
-		// this.draw()
-
-		// this.loop()
 	}
-
-	// private loop = () => {
-	//   if (!this._looping) return
-
-	//   this.hit = this.hitTest()
-	//   this.cvs.style.setProperty("cursor", this.getCursor(this.hit))
-
-	//   let id = ""
-	//   if (this.hit.type === "box") id = this.hit.id
-
-	//   if (id !== this.hoveredId) {
-	//     this.hoveredId = id
-	//     if (state.index === this._diffIndex) {
-	//       this.clear()
-	//       this.draw()
-	//     }
-	//   }
-
-	//   if (state.index === this._diffIndex) {
-	//     requestAnimationFrame(this.loop)
-	//     return
-	//   }
-
-	//   this.allBoxes = Object.values(steady.boxes)
-	//   this.allBoxes = this.allBoxes.sort((a, b) => b.z - a.z)
-
-	//   this.clear()
-	//   this.draw()
-
-	//   this._diffIndex = state.index
-	//   requestAnimationFrame(this.loop)
-	// }
 
 	destroy() {
 		this._looping = false
@@ -190,9 +147,6 @@ class Surface {
 		this.drawBoxes()
 		this.drawBrush()
 		this.drawSelection()
-
-		// this.setupCamera()
-		// this.renderCanvasThings()
 
 		// if (this.state.isInAny("dragging")) {
 		//   this.computeArrows()

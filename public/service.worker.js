@@ -7,6 +7,22 @@ importScripts(
 const tree = new RBush()
 const hitTree = new RBush()
 
+function updateTree({ boxes }) {
+	tree.clear()
+
+	tree.load(
+		boxes.map((box) => ({
+			id: box.id,
+			minX: box.x,
+			minY: box.y,
+			maxX: box.x + box.width,
+			maxY: box.y + box.height,
+		}))
+	)
+
+	return tree
+}
+
 const throttle = (fn, wait) => {
 	let inThrottle, lastFn, lastTime
 	return function () {
@@ -28,23 +44,48 @@ const throttle = (fn, wait) => {
 	}
 }
 
-let selected = []
+function getBoundingBox(boxes) {
+	if (boxes.length === 0) {
+		return {
+			x: 0,
+			y: 0,
+			maxX: 0,
+			maxY: 0,
+			width: 0,
+			height: 0,
+		}
+	}
 
-function getBoxSelecter({ initialBoxes, origin }) {
+	const first = boxes[0]
+
+	let x = first.minX
+	let maxX = first.maxX
+	let y = first.minX
+	let maxY = first.maxY
+
+	for (let box of boxes) {
+		x = Math.min(x, box.minX)
+		maxX = Math.max(maxX, box.maxX)
+		y = Math.min(y, box.minY)
+		maxY = Math.max(maxY, box.maxY)
+	}
+
+	return {
+		x,
+		y,
+		width: maxX - x,
+		height: maxY - y,
+		maxX,
+		maxY,
+	}
+}
+
+let selected = []
+let bounds = {}
+
+function getBoxSelecter({ origin }) {
 	let x0, y0, x1, y1, t
 	const { x: ox, y: oy } = origin
-
-	tree.clear()
-
-	tree.load(
-		initialBoxes.map((box) => ({
-			id: box.id,
-			minX: box.x,
-			minY: box.y,
-			maxX: box.x + box.width,
-			maxY: box.y + box.height,
-		}))
-	)
 
 	return function select(point) {
 		x0 = ox
@@ -64,11 +105,10 @@ function getBoxSelecter({ initialBoxes, origin }) {
 			y1 = t
 		}
 
-		const results = tree
-			.search({ minX: x0, minY: y0, maxX: x1, maxY: y1 })
-			.map((b) => b.id)
+		const results = tree.search({ minX: x0, minY: y0, maxX: x1, maxY: y1 })
 
-		selected = results
+		selected = results.map((b) => b.id)
+		bounds = getBoundingBox(results)
 		return results
 	}
 }
@@ -293,9 +333,16 @@ function getTransform(type, payload) {
 		case "hitTest": {
 			return hitTest(payload)
 		}
+		case "updateTree": {
+			return updateTree(payload)
+		}
 		case "selecter": {
-			boxSelecter = throttle(getBoxSelecter(payload), 16)
-			return true
+			boxSelecter = getBoxSelecter(payload)
+			const { minX, minY, maxX, maxY } = tree
+			return { minX, minY, maxX, maxY }
+		}
+		case "selectedBounds": {
+			return bounds
 		}
 		case "selected": {
 			boxSelecter(payload)
