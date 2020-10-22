@@ -123,7 +123,7 @@ class Surface {
 
 			if (state.isIn("selectingIdle")) {
 				this.allBoxes = Object.values(steady.boxes)
-				this.allBoxes = this.allBoxes.sort((a, b) => b.z - a.z)
+				this.allBoxes = this.allBoxes.sort((a, b) => a.z - b.z)
 				getFromWorker("updateHitTree", this.allBoxes)
 			}
 

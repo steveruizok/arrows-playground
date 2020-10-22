@@ -73,7 +73,7 @@ function Canvas({ width, height, ...rest }: Props) {
 				const surface = rSurface.current
 				if (!surface) return
 
-				const hit = surface.hitTest()
+				const { hit } = surface
 
 				switch (hit.type) {
 					case "bounds": {

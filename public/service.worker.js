@@ -208,6 +208,7 @@ function updateHitTestTree(boxes) {
 			minY: box.y,
 			maxX: box.x + box.width,
 			maxY: box.y + box.height,
+			z: box.z,
 		}))
 	)
 }
@@ -269,7 +270,7 @@ function hitTest({ point, bounds, zoom }) {
 	// }
 
 	if (hits.length > 0) {
-		const hit = Object.values(hits).sort((a, b) => a.z - b.z)[0]
+		const hit = Object.values(hits).sort((a, b) => b.z - a.z)[0]
 		return { type: "box", id: hit.id }
 	}
 
