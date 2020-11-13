@@ -61,20 +61,6 @@ export function distributeBoxesY(boxes: IBox[]) {
 		box = sorted[i]
 		box.y = min + step * i
 	}
-
-	// let t = min
-	// const gap = (max - min - sum) / (boxes.length - 1)
-	// for (let box of [...boxes].sort((a, b) => a.y - b.y)) {
-	// 	box.y = t
-	// 	t += box.height + gap
-	// }
-	// console.log(max, sum, gap)
-
-	// for (let box of rest) {
-	// 	min = Math.min(min, box.y)
-	// 	max = Math.max(max, box.y + box.height)
-	// 	sum += box.height
-	// }
 }
 export function alignBoxesCenterX(boxes: IBox[]) {
 	let midX = 0
