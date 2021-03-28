@@ -1,10 +1,10 @@
 import React from "react"
 import dynamic from "next/dynamic"
 
-const App = dynamic(() => import("../components/pixi-app"), {
+const App = dynamic(() => import("../components/two-app"), {
   ssr: false,
 })
 
 export default function Home() {
-  return <App count={10000} />
+  return <App count={1000} />
 }

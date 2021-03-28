@@ -1,14 +1,15 @@
+const WorkerPlugin = require("worker-plugin")
+
 module.exports = {
-	webpack(config, options) {
-		config.module.rules.push({
-			test: /\.worker\.js$/,
-			loader: "worker-loader",
-			// options: { inline: true }, // also works
-			options: {
-				name: "static/[hash].worker.js",
-				publicPath: "/_next/",
-			},
-		})
-		return config
-	},
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    if (!isServer) {
+      config.plugins.push(
+        new WorkerPlugin({
+          // use "self" as the global object when receiving hot updates.
+          globalObject: "self",
+        })
+      )
+    }
+    return config
+  },
 }

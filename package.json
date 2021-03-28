@@ -1,34 +1,43 @@
 {
-	"name": "arrows-playground",
-	"version": "0.1.0",
-	"private": true,
-	"scripts": {
-		"dev": "next dev",
-		"build": "next build",
-		"start": "next start"
-	},
-	"dependencies": {
-		"@state-designer/react": "^1.2.31",
-		"@stitches/react": "^0.0.2",
-		"@types/rbush": "^3.0.0",
-		"@types/uuid": "^8.3.0",
-		"@zeit/next-workers": "^1.0.0",
-		"comlink": "^4.3.0",
-		"framer-motion": "^2.7.9",
-		"lodash": "^4.17.20",
-		"next": "9.5.4",
-		"perfect-arrows": "^0.3.3",
-		"pixi.js": "^5.3.3",
-		"rbush": "^3.0.1",
-		"react": "^16.14.0",
-		"react-dom": "^16.14.0",
-		"react-no-ssr": "^1.1.0",
-		"use-resize-observer": "^6.1.0",
-		"uuid": "^8.3.1",
-		"worker-loader": "^3.0.5"
-	},
-	"devDependencies": {
-		"@types/node": "^14.11.5",
-		"typescript": "^4.0.3"
-	}
+  "name": "next-playground",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@state-designer/react": "^1.2.31",
+    "@stitches/react": "^0.0.2",
+    "comlink": "^4.3.0",
+    "debounce-promise": "^3.1.2",
+    "lodash": "^4.17.20",
+    "make-cancel-promise": "^1.0.2",
+    "next": "9.5.5",
+    "pixi-filters": "^3.1.1",
+    "pixi.js": "^5.3.3",
+    "rbush": "^3.0.1",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "react-virtualized-auto-sizer": "^1.0.2",
+    "react-vtree": "^2.0.4",
+    "react-window": "^1.8.6",
+    "two.js": "^0.7.0-stable.1",
+    "worker-loader": "^3.0.5",
+    "worker-plugin": "^5.0.0"
+  },
+  "prettier": {
+    "semi": false
+  },
+  "devDependencies": {
+    "@types/debounce-promise": "^3.1.3",
+    "@types/lodash": "^4.14.162",
+    "@types/node": "^14.14.2",
+    "@types/rbush": "^3.0.0",
+    "@types/react": "^16.9.53",
+    "@types/two.js": "^0.7.2",
+    "@zeit/next-workers": "^1.0.0",
+    "typescript": "^4.0.3"
+  }
 }
